@@ -30,6 +30,15 @@ def main():
     out = root/'test-results/pages-candidate.json'
     out.parent.mkdir(parents=True, exist_ok=True)
     try:
+        run(root,[sys.executable,'-B','-m','unittest',
+            'scripts.tests.test_course_completion','scripts.tests.test_git_project_completion',
+            'scripts.tests.test_myatlas_release','scripts.tests.test_myatlas_navigation',
+            'scripts.tests.test_external_completion','scripts.tests.test_project_sync',
+            'scripts.tests.test_leetcode_progress','scripts.tests.test_leetcode_cpu'],env)
+        for test in ('progress-analytics','universal-progress','completion','portfolio','copy','geometry-measurements'):
+            run(root,['node','tests/myatlas/'+test+'.cjs'],env)
+        run(root,['node','--test','tests/leetcode-progress/loader.cjs'],env)
+        run(root,['node','--test',*['tools/chrome-tracker/tests/'+n+'.cjs' for n in ('core','worker','package','public-sync')]],env)
         for script in ('check-myatlas-production.py', 'build-myatlas.py'):
             run(root, [sys.executable,'-B','scripts/'+script],env)
         run(root,[sys.executable,'-B','scripts/check-myatlas-production.py','--site','build/pages/knowledge-map','--current-head'],env)

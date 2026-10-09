@@ -75,17 +75,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate committed edition and completion evidence
-        run: |
-          python3 -B scripts/check-myatlas-production.py
-          python3 -B -m unittest scripts.tests.test_course_completion scripts.tests.test_git_project_completion scripts.tests.test_myatlas_release scripts.tests.test_myatlas_navigation scripts.tests.test_external_completion
-          for test in progress-analytics universal-progress completion portfolio copy geometry-measurements; do node "tests/myatlas/$test.cjs"; done
-      - name: Validate rights-safe LeetCode summary sources
-        run: |
-          python3 -B -m unittest scripts.tests.test_leetcode_progress scripts.tests.test_leetcode_cpu
-          node --test tests/leetcode-progress/loader.cjs
-      - name: Validate owner publisher without real GitHub writes
-        run: node --test tools/chrome-tracker/tests/core.cjs tools/chrome-tracker/tests/worker.cjs tools/chrome-tracker/tests/package.cjs tools/chrome-tracker/tests/public-sync.cjs
       - name: Generate public evidence and readable differential summary
         run: |
           python3 -B scripts/sync-hyperskill-projects.py --evidence-root build/evidence/hyperskill-projects > "$RUNNER_TEMP/progress-review.json"
