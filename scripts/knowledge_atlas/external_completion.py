@@ -23,7 +23,12 @@ def external_inputs(root, evidence_root, ref='HEAD'):
             continue
         meta, name = item.split(b'\t', 1)
         entries[name.decode()] = meta.decode().split()
-    manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.split('/')[0] in ('java', 'python') and n.endswith('/.hyperskill-import.json'))
+    manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.endswith('/.hyperskill-import.json'))
+    if any(n.split('/')[0] not in ('java','python') for n in manifests):
+        raise ValueError('Unsupported canonical export language')
+    for name in entries:
+        if name.split('/')[0] in ('java','python') and '/'.join(name.split('/')[:2])+'/.hyperskill-import.json' not in manifests:
+            raise ValueError('Canonical project directory missing export manifest: ' + name)
     if not manifests:
         raise ValueError("No canonical project exports found; preserve previous deployment")
     refs = []
