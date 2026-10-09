@@ -4,6 +4,12 @@ const root=path.resolve(__dirname,'../..');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||path.join(root,'scripts/knowledge_atlas/node_modules/playwright'));
 const base=process.env.LEETCODE_PREVIEW||'http://127.0.0.1:8807/myatlas/leetcode-progress/';
 const source=require('../../src/leetcode-progress/loader.js').URL;
+// Before this repository has a public main, exercise its exact committed snapshot.
+// Production builds and live verification must always use the real anonymous GET.
+const preRelease=process.env.MYATLAS_PRE_RELEASE_PROGRESS==='1';
+if(preRelease&&process.env.GITHUB_REF==='refs/heads/main')throw Error('Production must read live progress');
+const seed=preRelease?fs.readFileSync(path.join(root,'progress/leetcode/solved.json'),'utf8'):null;
+
 const artifact=process.env.LEETCODE_ARTIFACT_DIR||path.join(root,'test-results');
 const fixtureRow={problemId:'lc:problem:p0001',source:'manual-owner-attestation'};
 const doc=(solved=[fixtureRow])=>({schemaVersion:1,updatedAt:new Date().toISOString(),solved});
@@ -22,7 +28,7 @@ async function visit(engine,name){
    row.requests.push({url,method:request.method(),external,phase});
    assert.equal(request.method(),'GET');
    assert(!('authorization' in headers));assert(!('cookie' in headers));
-   if(external){assert.equal(url,source);assert(!('referer' in headers));}
+   if(external){assert.equal(url,source);assert(!('referer' in headers));if(preRelease)return route.fulfill({contentType:'application/json',body:seed});}
    else assert(new URL(url).pathname.startsWith(new URL(base).pathname));
    await route.continue();
   });
@@ -41,7 +47,7 @@ async function visit(engine,name){
   assert.deepEqual(await page.locator('#records li').allTextContents(),unique.map(r=>r.problemId+' · '+r.source));
   assert((await page.locator('#status').innerText()).includes(liveDocument.updatedAt));
   assert(!await page.locator('body').innerText().then(s=>s.includes('3,511')));
-  row.live={count:unique.length,updatedAt:liveDocument.updatedAt};
+  row.live={count:unique.length,updatedAt:liveDocument.updatedAt,preReleaseFixture:preRelease};
   for(const width of [1440,390]){
    await page.setViewportSize({width,height:width===390?844:1000});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

@@ -7,6 +7,12 @@ const widths=[2048,1440,1280,1024,768,390],expected='c23469da99adc627db3a52d89d3
 const hash=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const geo=()=>LeetCodeAtlas.state().L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.physicalParent,n.data.problem?.primaryTaxonomyId]);
 const results={phase,status:'RUNNING',rows:[],realWrites:0};
+// Before this repository has a public main, exercise its exact committed snapshot.
+// Production builds and live verification must always use the real anonymous GET.
+const preRelease=process.env.MYATLAS_PRE_RELEASE_PROGRESS==='1';
+if(preRelease&&process.env.GITHUB_REF==='refs/heads/main')throw Error('Production must read live progress');
+const seed=preRelease?fs.readFileSync(path.join(root,'progress/leetcode/solved.json'),'utf8'):null;
+
 function upperBoxes(){
  const selectors=['#application-header h1','#application-nav a','#difficulty-field','#availability-field','#branch-menu>summary','#reset-filters','#search','#search-results',
   '#atlas-context','#global-progress','#difficulty-distribution','#public-progress-status','#refresh-public-progress','#public-progress-details>summary',
@@ -31,7 +37,7 @@ async function run(engine,name,options){
   const context=await browser.newContext({viewport:{width,height:width===390?844:1000}}),page=await context.newPage(),errors=[],requests=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push('HTTP '+r.status()+' '+r.url());});
   await context.route('**/*',route=>{const q=route.request(),url=q.url();assert.equal(q.method(),'GET');assert.equal(q.headers().authorization,undefined);assert.equal(q.headers().cookie,undefined);
-   assert(new URL(url).origin===new URL(base).origin||url===R.URL,'Unexpected network destination');if(url===R.URL)requests.push({method:'GET',credentials:false});return route.continue();});
+   assert(new URL(url).origin===new URL(base).origin||url===R.URL,'Unexpected network destination');if(url===R.URL){requests.push({method:'GET',credentials:false});if(preRelease)return route.fulfill({contentType:'application/json',body:seed});}return route.continue();});
   await page.goto(base);await page.waitForFunction(()=>document.body.dataset.publicState==='published');await page.evaluate(()=>document.fonts.ready);
   const solvedCount=await page.evaluate(()=>MyAtlasPublicIntegration.state().value.resolved.length),publishedCount=await page.evaluate(()=>MyAtlasPublicIntegration.state().value.document.solved.length);
   assert.equal(await page.evaluate(()=>LeetCodeAtlas.state().progress.uniqueSolved),solvedCount);

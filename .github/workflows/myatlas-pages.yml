@@ -71,6 +71,7 @@ jobs:
       - name: Validate the actual repository base path
         env:
           HYPERSKILL_EVIDENCE_ROOT: build/evidence/hyperskill-projects
+          MYATLAS_PRE_RELEASE_PROGRESS: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
         run: |
           mkdir -p build/preview
           ln -s ../pages build/preview/myatlas
