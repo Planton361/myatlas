@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--evidence-root', type=Path, required=True)
-    parser.add_argument('--event', choices=('schedule', 'push', 'workflow_dispatch'), required=True)
+    parser.add_argument('--event', choices=('schedule', 'push', 'workflow_dispatch', 'pull_request'), required=True)
     parser.add_argument('--github-output', type=Path)
     args = parser.parse_args()
     # Evidence failures intentionally exit nonzero: never convert rejection to

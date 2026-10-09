@@ -10,7 +10,7 @@ from .myatlas_guard import REVIEWED_FINGERPRINT
 from .external_release import verify_external, inventory
 
 MANIFEST = 'docs/releases/myatlas-progress-scope-v1.json'
-REVIEWED_SHA = 'f03ce831a83078f58d7b105b4a3ee30d4f86b6188f78cc82e801e23648ce9a11'
+REVIEWED_SHA = '64d987165bcf493be5ea3e008af0d4b7fbfed6fbf68db80e0a0efc3393e71e68'
 
 
 def sha(raw):

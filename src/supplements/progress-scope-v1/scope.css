@@ -1,5 +1,7 @@
 /* Presentation only: no card size, position, text metrics, layout or status changes. */
-#graph .node.topic.in-progress-scope > .card{stroke:#db8b20;stroke-width:2.5px;vector-effect:non-scaling-stroke}
-#progress-scope-legend{border-left:3px solid #db8b20;padding-left:8px;line-height:1.5}
-#progress-scope-legend[hidden]{display:none}
+#graph .node.topic.in-progress-scope > .card{stroke:var(--accent);stroke-width:2.5px;vector-effect:non-scaling-stroke}
+#progress-scope-legend,#progress-scope-key{border-left:3px solid var(--accent);padding-left:8px;line-height:1.5}
+#progress-scope-legend[hidden],#progress-scope-key[hidden]{display:none}
 #progress-associations:empty{display:none}
+#progress-scope-key{position:absolute;left:18px;bottom:40px;max-width:calc(100% - 36px);z-index:3;margin:0;background:var(--panel);padding:6px 8px;font-size:11px;pointer-events:none}
+@media(max-width:700px){#progress-scope-key{left:10px;bottom:48px;font-size:10px}}

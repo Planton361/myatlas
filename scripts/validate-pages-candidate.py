@@ -37,12 +37,14 @@ def main():
             extra = [] if script=='build-myatlas-navigation.py' else ['--evidence-root',evidence]
             for check in ([],['--check']):
                 run(root,[sys.executable,'-B','scripts/'+script,*check,*extra],env)
+        run(root,[sys.executable,'-B','-m','unittest','scripts.tests.test_presentation_release'],env)
         for script in ('build-leetcode-progress.py','build-leetcode-atlas.py'):
             run(root,[sys.executable,'-B','scripts/'+script],env)
         if not (root/'scripts/knowledge_atlas/node_modules/playwright').exists():
             run(root,['npm','ci','--prefix','scripts/knowledge_atlas','--ignore-scripts'],env)
         if args.install_browsers:
             run(root,['scripts/knowledge_atlas/node_modules/.bin/playwright','install','chromium','webkit'],env)
+        (root/'build/pages/.nojekyll').write_text('')
         preview=root/'build/preview';preview.mkdir(exist_ok=True)
         link=preview/'myatlas'
         if not link.exists():link.symlink_to('../pages',target_is_directory=True)

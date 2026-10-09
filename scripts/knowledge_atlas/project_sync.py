@@ -62,7 +62,7 @@ def deployed_revisions(read=public_read):
 
 
 def decide(root, evidence_root, event, read=public_read):
-    if event not in ('schedule', 'push', 'workflow_dispatch'):
+    if event not in ('schedule', 'push', 'workflow_dispatch', 'pull_request'):
         raise ValueError('Unsupported workflow event')
     # This is the existing exact committed evidence scanner/projection, not a
     # new inference engine. Rejections propagate and block the pipeline.

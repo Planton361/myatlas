@@ -13,7 +13,8 @@ try{
  const canvas=document.querySelector('#canvas'),overview=document.createElement('section'),panel=document.createElement('section');
  overview.id='progress-overview';overview.setAttribute('aria-label','Personal knowledge and portfolio overview');panel.id='progress-panel';panel.hidden=true;panel.setAttribute('aria-label','Progress analysis');
  const global=analytics.global();overview.innerHTML=`${ProgressPresentation.overview(analytics,course)}<button id="progress-expand" aria-expanded="false" aria-controls="progress-panel">Progress analysis</button>`;
- canvas.append(overview,panel);
+ const key=document.createElement('p');key.id='progress-scope-key';key.hidden=true;key.setAttribute('aria-live','polite');
+ canvas.append(overview,panel,key);
  const expand=overview.querySelector('button');function toggle(open){panel.hidden=!open;expand.setAttribute('aria-expanded',String(open));if(!open)expand.focus({preventScroll:true});}
  expand.onclick=()=>toggle(panel.hidden);panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();toggle(false);}});
  const options=(type,selected,rows=null)=>`<option value="">Select ${type}</option>`+(rows||[...analytics.scopeMaps[type].values()]).map(r=>`<option value="${r.scope_id}" ${r.scope_id===selected?'selected':''}>${r.scope_id} · ${esc(r.title)}${r.state==='UNKNOWN'?' · Requirements unknown':''}</option>`).join('');
@@ -26,8 +27,7 @@ try{
    if(match)visible.add(id);
    node.setAttribute('aria-label',node.dataset.baseName+(match?'; in selected scope':''));
   }
-  const legend=document.querySelector('#progress-scope-legend');
-  if(legend){legend.hidden=!scope;legend.textContent=scope?`Topics in selected scope · ${visible.size} visible / ${ids.size} assigned${scope.state==='UNKNOWN'?' · Requirements unknown':''}`:'';}
+  for(const legend of [document.querySelector('#progress-scope-legend'),key])if(legend){legend.hidden=!scope;legend.textContent=scope?`Topics in selected scope · ${visible.size} visible / ${ids.size} assigned${scope.state==='UNKNOWN'?' · Requirements unknown':''}`:'';}
  }
  function renderPanel(){
   const association=course==null?null:ux.association(course);
