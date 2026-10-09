@@ -23,7 +23,9 @@ def external_inputs(root, evidence_root, ref='HEAD'):
             continue
         meta, name = item.split(b'\t', 1)
         entries[name.decode()] = meta.decode().split()
-    manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.startswith('java/') and n.endswith('/.hyperskill-import.json'))
+    manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.split('/')[0] in ('java', 'python') and n.endswith('/.hyperskill-import.json'))
+    if not manifests:
+        raise ValueError("No canonical project exports found; preserve previous deployment")
     refs = []
     with tempfile.TemporaryDirectory(prefix='myatlas-public-evidence-') as folder:
         for manifest in manifests:
@@ -39,7 +41,7 @@ def external_inputs(root, evidence_root, ref='HEAD'):
                 refs.append(dict(repository=REPOSITORY, commit=commit, path=name, git_blob=oid, sha256=hashlib.sha256(raw).hexdigest()))
         completion = scan(Path(folder), inputs['scopes'])
     if completion['rejected']:
-        raise ValueError('Rejected public exports; keep the previous deployment')
+        raise ValueError('Rejected public exports; keep the previous deployment: ' + json.dumps(completion['rejected'], sort_keys=True))
     completion['course_completion'] = inputs['completion']['course_completion']
     inputs['completion'] = completion
     inputs['source']['evidence'].extend(refs)

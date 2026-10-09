@@ -1,0 +1,5 @@
+/* Presentation only: no card size, position, text metrics, layout or status changes. */
+#graph .node.topic.in-progress-scope > .card{stroke:#db8b20;stroke-width:2.5px;vector-effect:non-scaling-stroke}
+#progress-scope-legend{border-left:3px solid #db8b20;padding-left:8px;line-height:1.5}
+#progress-scope-legend[hidden]{display:none}
+#progress-associations:empty{display:none}
