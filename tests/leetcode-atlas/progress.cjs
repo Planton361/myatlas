@@ -8,7 +8,10 @@ const hash=v=>crypto.createHash('sha256').update(JSON.stringify(v)).digest('hex'
 const geometry=()=>LeetCodeAtlas.state().L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.physicalParent,n.data.problem?.primaryTaxonomyId]);
 const row={problemId:'lc:problem:p0001',source:'manual-owner-attestation'},second={...row,problemId:'lc:problem:eval-00002'};
 let tick=0;const doc=solved=>({schemaVersion:1,updatedAt:new Date(Date.UTC(2000,0,1,0,0,tick++)).toISOString(),solved});
-const results={status:'RUNNING',browsers:[],unauthorizedRequests:0,realWrites:0};
+const preRelease=process.env.MYATLAS_PRE_RELEASE_PROGRESS==='1';
+if(preRelease&&process.env.GITHUB_REF==='refs/heads/main')throw Error('Production must read live progress');
+const seed=preRelease?fs.readFileSync(path.resolve(__dirname,'../../progress/leetcode/solved.json'),'utf8'):null;
+const results={status:'RUNNING',browsers:[],unauthorizedRequests:0,realWrites:0,preReleaseFixture:preRelease};
 async function run(engine,name,options){
  const browser=await engine.launch({headless:true,...options});
  try{
@@ -74,7 +77,7 @@ async function run(engine,name,options){
   livePage.on('pageerror',e=>liveErrors.push(e.message));livePage.on('console',m=>{if(m.type()==='error')liveErrors.push(m.text());});
   await live.route('**/*',route=>{
    const request=route.request(),url=request.url();if(new URL(url).origin===new URL(base).origin)return route.continue();
-   assert.equal(url,R.URL);assert.equal(request.method(),'GET');const h=request.headers();assert.equal(h.authorization,undefined);assert.equal(h.cookie,undefined);assert.equal(h.referer,undefined);liveReads.push({method:'GET',authenticated:false,url});return route.continue();
+   assert.equal(url,R.URL);assert.equal(request.method(),'GET');const h=request.headers();assert.equal(h.authorization,undefined);assert.equal(h.cookie,undefined);assert.equal(h.referer,undefined);liveReads.push({method:'GET',authenticated:false,url});if(preRelease)return route.fulfill({contentType:'application/json',body:seed});return route.continue();
   });
   await livePage.goto(base+'leetcode-atlas/');await livePage.waitForFunction(()=>document.body.dataset.publicState==='published',null,{timeout:30000});
   const state=await livePage.evaluate(()=>MyAtlasPublicIntegration.state());
