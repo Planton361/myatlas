@@ -5,7 +5,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const read=async url=>{const r=await fetch(url);if(!r.ok)throw Error('Progress data unavailable');return r.json();};
 try{
  const [catalog,scopes]=await Promise.all([read('../knowledge-atlas-scope-pyramid/catalog.json'),read('../knowledge-atlas-scope-pyramid/scope-index.json')]);
- catalog.projectCompletion=await read('../project-completion/progress.json');
+ catalog.projectCompletion=await read('../../progress.json');
  if(!catalog.projectCompletion.course_completion)catalog.projectCompletion.course_completion=await read('../project-completion/course-completions.json');
  const analytics=ProgressAnalytics.create({catalog,scopes});let course=analytics.courseObserved(8)?8:scopes.courses[0]?.scope_id,project=null,stage=null;
  const ux=ScopeUXModel.create(scopes,catalog,[],[]);

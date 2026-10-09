@@ -10,7 +10,7 @@ from .myatlas_guard import REVIEWED_FINGERPRINT
 from .external_release import verify_external, inventory
 
 MANIFEST = 'docs/releases/myatlas-progress-scope-v1.json'
-REVIEWED_SHA = '6960e69efd561c3b2b6b9a4efe3c887fd4516b2ff5628655ca6fef81a284ce9b'
+REVIEWED_SHA = 'f03ce831a83078f58d7b105b4a3ee30d4f86b6188f78cc82e801e23648ce9a11'
 
 
 def sha(raw):
@@ -73,6 +73,8 @@ def apply_presentation(root, site, evidence_root, ref='HEAD'):
     require(root / 'build' in site.parents and not any(p.is_symlink() for p in [site, *site.parents]), 'Unsafe presentation destination')
     value = approved(root)
     verify_external(root, site, evidence_root, ref)
+    for name, edit in value['edits'].items():
+        require(sha((site / name).read_bytes()) == edit['before'], 'Unexpected presentation input')
     edits = {name: transform(root,value,name) for name in value['edits']}
     runtime = json.loads((site / 'runtime-manifest.json').read_bytes())
     for name, raw in edits.items():

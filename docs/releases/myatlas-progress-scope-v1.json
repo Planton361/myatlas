@@ -2,23 +2,23 @@
   "base_manifest_fingerprint": "70b97e99f104ed85af7d49bba6f6b3af66cc826164caa6e93fb31d4ffc13e3b5",
   "edits": {
     "views/knowledge-atlas-v6-skill-tree/index.html": {
-      "after": "b55800ac7a22972016692be9aae7d6b2cd6b166773eb1d55ba3291fa090be14b",
-      "baseline_source": "src/myatlas/knowledge-atlas-v6-skill-tree/index.html",
-      "before": "e9502efd890d1d82e189a6a98953c7a06a43b58149075eb2c3bd3f07b6e5c6ae",
+      "after": "36ec73f307df05d6670d0ea6fdd2cf6da8e50bb46599702845ed730101837be8",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/index.html",
+      "before": "b5516bd4dc24a6d844b9b6fad980b9f46a8c176fa203b823c80694f7584b0be4",
       "new": "<script src=\"../knowledge-atlas-scope-pyramid/ux-model.js\"></script><script src=\"progress-ui.js\"></script>",
       "old": "<script src=\"progress-ui.js\"></script>",
       "operation": "insert"
     },
     "views/knowledge-atlas-v6-skill-tree/progress-ui.js": {
-      "after": "8f02a099a50d334c01c801d2fe36561c5ea97ffa08374f45f3b7e5b3f341184c",
-      "baseline_source": "src/myatlas/knowledge-atlas-v6-skill-tree/progress-ui.js",
-      "before": "1bb1917bf1ece8282fbecbb023127c159f5130adef917f7539eb06a0bcac79e6",
+      "after": "c6c443d1879eff7186f4cb1d0db69b5cf7304c900f6a41a478552c9561cb8889",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/progress-ui.js",
+      "before": "93891bbd2eebc8fb09576569ac3e45ae999aa27cb85469ae476283b83947ea30",
       "operation": "replace",
       "source": "src/supplements/progress-scope-v1/progress-ui.js"
     },
     "views/knowledge-atlas-v6-skill-tree/progress.css": {
       "after": "c012f6c96b7c18b5ddc7c225bfcbbb257787c0caa6909be90aa1703f86314ee1",
-      "baseline_source": "src/myatlas/knowledge-atlas-v6-skill-tree/progress.css",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/progress.css",
       "before": "9171e901070bebb0729bfe7f19b44e3726495fe09e220c1ae7175e6491df6f3d",
       "operation": "append",
       "source": "src/supplements/progress-scope-v1/scope.css"
@@ -26,7 +26,7 @@
   },
   "schema": 1,
   "sources": {
-    "src/supplements/progress-scope-v1/progress-ui.js": "8f02a099a50d334c01c801d2fe36561c5ea97ffa08374f45f3b7e5b3f341184c",
+    "src/supplements/progress-scope-v1/progress-ui.js": "c6c443d1879eff7186f4cb1d0db69b5cf7304c900f6a41a478552c9561cb8889",
     "src/supplements/progress-scope-v1/scope.css": "95ec72bf58335c377b80ddfb884210dda432ccb9bd636c9879e44709e9dfbe0d"
   },
   "version": "progress-scope-v1"
