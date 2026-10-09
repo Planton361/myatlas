@@ -2,6 +2,7 @@ name: MyAtlas Pages
 on:
   push:
     branches: [main, 'release/**']
+    paths-ignore: ['progress/leetcode/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -40,6 +41,8 @@ jobs:
         run: |
           python3 -B -m unittest scripts.tests.test_leetcode_progress scripts.tests.test_leetcode_cpu
           node --test tests/leetcode-progress/loader.cjs
+      - name: Validate owner publisher without real GitHub writes
+        run: node --test tools/chrome-tracker/tests/core.cjs tools/chrome-tracker/tests/worker.cjs tools/chrome-tracker/tests/package.cjs tools/chrome-tracker/tests/public-sync.cjs
       - name: Generate public evidence and readable differential summary
         run: |
           python3 -B scripts/sync-hyperskill-projects.py --evidence-root build/evidence/hyperskill-projects > "$RUNNER_TEMP/progress-review.json"

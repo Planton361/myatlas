@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MyAtlas local progress</title><link rel="stylesheet" href="popup.css"></head>
+<body><h1>MyAtlas · LeetCode</h1><p id="count">Loading…</p>
+<p id="current"></p><p id="candidate"></p>
+<button id="confirm" hidden>Confirm recent Accepted as solved</button>
+<button id="mark" disabled>Mark current problem solved</button>
+<p class="hint">Marking is your attestation. Accepted observations require confirmation. Public sync is optional.</p>
+<h2>Recently recorded</h2><ol id="recent"></ol>
+<details><summary>Correct any Problem</summary><label>Recorded Problem <select id="correction"></select></label><button id="remove" disabled>Undo selected solve</button></details>
+<div class="backup"><button id="export">Export progress JSON</button><label class="file">Choose progress JSON<input id="import" type="file" accept=".json,application/json"></label><button id="apply-import" hidden>Merge selected backup</button></div>
+<p class="hint">Import adds missing IDs and keeps existing records. Export regularly; uninstalling removes local storage.</p>
+<p id="publisher-status" role="status" aria-live="polite">Public sync disabled</p>
+<details><summary>Optional public GitHub sync</summary>
+<p class="hint">Publish confirmed IDs only to Planton361/myatlas/progress/leetcode/solved.json. Undo removes an ID from the current public file; Git history can retain earlier records.</p>
+<label>Fine-grained token <input id="publisher-token" type="password" autocomplete="off" spellcheck="false" maxlength="256"></label>
+<p class="hint">Select only the progress repository with Contents read/write. Token stays in trusted extension session storage and must be re-entered after browser restart.</p>
+<button id="publisher-enable">Enable and publish confirmed records</button>
+<button id="sync-now" disabled>Sync Now</button><button id="publisher-disable">Disable and forget token</button>
+</details>
+<p id="message" role="status" aria-live="polite"></p>
+<script src="core.js"></script><script src="popup.js"></script></body></html>

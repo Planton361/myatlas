@@ -2,6 +2,7 @@ name: MyAtlas read-only validation
 on:
   push:
     branches: [main, 'release/**']
+    paths-ignore: ['progress/leetcode/**']
   pull_request:
   workflow_dispatch:
 permissions:

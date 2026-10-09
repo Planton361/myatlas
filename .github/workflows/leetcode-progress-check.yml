@@ -1,0 +1,29 @@
+name: Confirmed LeetCode progress schema
+on:
+  push:
+    branches: [main, 'release/**']
+    paths: ['progress/leetcode/solved.json', '.github/workflows/leetcode-progress-check.yml']
+  pull_request:
+    paths: ['progress/leetcode/solved.json', '.github/workflows/leetcode-progress-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact IDs and public schema without changing progress
+        run: |
+          node - <<'JS'
+          const fs=require('node:fs'),reader=require('./src/leetcode-progress/loader.js');
+          const index=require('./tools/chrome-tracker/extension/catalog-index.json');
+          const raw=fs.readFileSync('progress/leetcode/solved.json','utf8');
+          if(Buffer.byteLength(raw)>reader.MAX_BYTES)throw Error('Progress exceeds size limit');
+          const result=reader.validate(JSON.parse(raw),new Set(Object.values(index)));
+          if(result.duplicates||result.unresolved.length)throw Error('Duplicate or unknown canonical IDs');
+          console.log('Confirmed public snapshot valid:',result.document.solved.length,'exact IDs');
+          JS

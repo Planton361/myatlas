@@ -9,12 +9,12 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'src/leetcode-progress'
 OUTPUT = ROOT / 'build/pages/leetcode-progress'
-# Hashes of the exact summary reviewed at foundation commit 691c02146ac3bcb497c554c745c10b3f30c217f1.
+# Reviewed summary assets; only public source links relocated for the repository split.
 ASSETS = {
-    'summary.html': ('index.html', 'ee337a3702b40cd213ed516f01c2f981ab0b8fe359c1dcd110ffcd8a6e2c506c'),
+    'summary.html': ('index.html', '5f8c340cf3d402e299b428a0282921c08743f30af79f5c098976ee1270b299f0'),
     'summary.css': ('summary.css', '045a6d52145fe5d26770a5511a31d5b9fbc6ee6422dc702546883b1f6b815db5'),
     'summary.js': ('summary.js', '0e382168c0f320020eaf1d006327d546bdf8088c7ac14e687286f98870896031'),
-    'loader.js': ('loader.js', 'a121d826a624661448bc8ad89feec5ba095011f9240956a33d36eb1934ef60c2'),
+    'loader.js': ('loader.js', 'b6fa03e666ba875d01b107e198387f333d5ab996df5ec0b6ab25c6772917e0cd'),
 }
 
 

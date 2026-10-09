@@ -4,8 +4,8 @@ The owner requested that Hyperskill Projects centre on runnable learning project
 
 - Canonical project source and importer: `Planton361/hyperskill-projects`.
 - Atlas source, catalog, evidence tooling, history and Pages application: `Planton361/myatlas`.
-- Confirmed public LeetCode IDs: `Planton361/myatlas-leetcode-progress`; unchanged.
-- Chrome tracker: the existing LeetCode foundation workspace; unchanged.
+- Confirmed public LeetCode IDs: `myatlas/progress/leetcode/solved.json`, copied byte-for-byte from the former progress repository.
+- Chrome tracker: `tools/chrome-tracker/extension/`; the existing installation is updated in place to preserve identity and local storage.
 
 The MyAtlas history retains the already public V6.6 baseline commits, so their immutable manifests and historical evidence can still be reconstructed. Current Java exports and importer templates are removed from the MyAtlas source tree; their code is not republished by the Pages build. Conversely, the Hyperskill source tree retains project exports/import tooling and small legacy redirects, with the Atlas application/data/tests relocated here. Existing history is preserved without rewriting either repository.
 
@@ -17,7 +17,7 @@ Final validation reconstructs the public projection from those real Git objects.
 
 Public pages move to `https://planton361.github.io/myatlas/`, with the existing sibling `knowledge-map/`, `leetcode-atlas/` and `leetcode-progress/` routes. Relative navigation and asset paths remain intact. The old project Pages site becomes redirect-only and preserves queries/hashes, including Course/Project/Stage and exact-ID bookmarks. Its project sources do not include the bulk catalog.
 
-No new token or cross-repository write permission is introduced. To refresh Hyperskill project evidence after a new export, manually run the MyAtlas Pages workflow on main. The Java project's own build is independent. LeetCode public progress continues to refresh read-only in the browser.
+Hyperskill evidence needs no cross-repository write permission. The owner must replace the extension token with a fine-grained Contents read/write token restricted to MyAtlas for the new LeetCode publisher destination; visitors remain anonymous. To refresh Hyperskill project evidence after a new export, manually run the MyAtlas Pages workflow on main. The Java project's own build is independent. LeetCode public progress continues to refresh read-only in the browser.
 
 ## Release order
 
@@ -27,3 +27,7 @@ No new token or cross-repository write permission is introduced. To refresh Hype
 4. Verify the old bookmarks, then update the profile README to link to both repositories.
 
 Use focused release branches and green CI before main publication. The project export bytes, canonical IDs, owner confirmations and production geometry must stay unchanged. Rollback uses ordinary revert commits, not force pushes or altered acceptance manifests.
+
+## LeetCode progress cutover
+
+See [the exact cutover checklist](../tools/chrome-tracker/README.md). The confirmed public JSON is copied without modifying IDs, sources, timestamp or schema. Browser reads and publisher writes now name only `Planton361/myatlas/progress/leetcode/solved.json`. Old session tokens are invalidated on endpoint change, while local records and pending corrections survive. The former `myatlas-leetcode-progress` repository remains until the owner verifies the first new-token Sync Now; only then may it be deleted. Do not delete it during the release or re-enable the old publisher after cutover. There is no background mirroring.

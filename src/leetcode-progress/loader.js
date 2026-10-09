@@ -1,7 +1,7 @@
 /* Anonymous public projection. No Chrome, publisher, credentials or catalog data. */
 (function(g){
 'use strict';
-const URL='https://raw.githubusercontent.com/Planton361/myatlas-leetcode-progress/main/solved.json';
+const URL='https://raw.githubusercontent.com/Planton361/myatlas/main/progress/leetcode/solved.json';
 const MAX_BYTES=768*1024, TTL=60000, MAX_CACHE_AGE=86400000;
 const SOURCES=new Set(['manual-owner-attestation','accepted-dom-owner-confirmed']);
 const exact=(o,keys)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join('|')===keys.slice().sort().join('|');

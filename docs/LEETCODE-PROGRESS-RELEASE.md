@@ -1,3 +1,5 @@
+> Repository split: current public source is `Planton361/myatlas/progress/leetcode/solved.json`. The original release inventory below is historical; the loader URL and summary source link have since been relocated. See [cutover instructions](../tools/chrome-tracker/README.md).
+
 # Public LeetCode progress summary
 
 Public route: <https://planton361.github.io/hyperskill-projects/leetcode-progress/>.
