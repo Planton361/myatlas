@@ -9,13 +9,17 @@ const geometry=()=>LeetCodeAtlas.state().L.nodes.map(n=>[n.key,n.x,n.y,n.width,n
 const row={problemId:'lc:problem:p0001',source:'manual-owner-attestation'},second={...row,problemId:'lc:problem:eval-00002'};
 let tick=0;const doc=solved=>({schemaVersion:1,updatedAt:new Date(Date.UTC(2000,0,1,0,0,tick++)).toISOString(),solved});
 const preRelease=process.env.MYATLAS_PRE_RELEASE_PROGRESS==='1';
+const production=process.env.GITHUB_REF==='refs/heads/main';
 if(preRelease&&process.env.GITHUB_REF==='refs/heads/main')throw Error('Production must read live progress');
 const seed=preRelease?fs.readFileSync(path.resolve(__dirname,'../../progress/leetcode/solved.json'),'utf8'):null;
 const results={status:'RUNNING',browsers:[],unauthorizedRequests:0,realWrites:0,preReleaseFixture:preRelease};
 async function run(engine,name,options){
  const browser=await engine.launch({headless:true,...options});
  try{
-  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[],reads=[];
+  let initial=expected,green=null,reads=[];
+  // Main acceptance is exclusively live; isolated failure fixtures remain in PRs.
+  if(!production){
+  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
   let status=503,payload=doc([row]),malformed=false;
   page.on('pageerror',e=>errors.push(e.message));
   await context.route('**/*',async route=>{
@@ -26,7 +30,7 @@ async function run(engine,name,options){
    reads.push({method:'GET',authenticated:false,status});return route.fulfill({status,headers:{'access-control-allow-origin':'*'},contentType:'application/json',body:malformed?'{malformed':JSON.stringify(payload)});
   });
   await page.goto(base+'leetcode-atlas/');await page.waitForFunction(()=>document.body.dataset.publicState==='unavailable');
-  const initial=hash(await page.evaluate(geometry));assert.equal(initial,expected);
+  initial=hash(await page.evaluate(geometry));assert.equal(initial,expected);
   await page.evaluate(()=>{const s=LeetCodeAtlas.state();window.__baseline={L:s.L,index:s.index,compiled:s.compiled,nodes:s.L.nodes.length};LeetCodeAtlas.select('lc:problem:p0001');});
   assert.match(await page.locator('#global-progress').textContent(),/unavailable/);assert.match(await page.locator('.progress-state').textContent(),/unavailable/);
   assert.equal(await page.evaluate(()=>LeetCodeAtlas.lastPaint.progressIndicators.length),0);
@@ -49,7 +53,7 @@ async function run(engine,name,options){
   }
   status=200;payload=doc([row]);await refresh('published',1);const one=await check(1);assert.equal(one.category,1);
   await page.waitForFunction(()=>LeetCodeAtlas.lastPaint.styles.some(r=>r.key==='lc:problem:p0001'&&r.solved));
-  const green=await page.evaluate(()=>{
+  green=await page.evaluate(()=>{
    const s=LeetCodeAtlas.state(),n=s.L.byKey.get('lc:problem:p0001'),x=Math.round(n.x*s.transform.k+s.transform.x),y=Math.round((n.y+n.height*.78)*s.transform.k+s.transform.y);
    return [...document.getElementById('world').getContext('2d').getImageData(x,y,1,1).data];
   });assert.deepEqual(green,[32,102,71,255]);
@@ -72,6 +76,7 @@ async function run(engine,name,options){
   assert.equal(await page.locator('#records li').count(),1);assert.match(await page.locator('#total').textContent(),/1$/);
   if(name!=='webkit')await page.screenshot({path:path.join(workspace,name+'-rights-safe-summary.png')});
   assert.deepEqual(errors,[]);await context.close();
+  }
   // Actual public CORS read in a fresh, unauthenticated visitor context. Never PUT.
   const live=await browser.newContext({viewport:{width:1440,height:1000}}),livePage=await live.newPage(),liveErrors=[],liveReads=[];
   livePage.on('pageerror',e=>liveErrors.push(e.message));livePage.on('console',m=>{if(m.type()==='error')liveErrors.push(m.text());});
@@ -94,7 +99,7 @@ async function run(engine,name,options){
   await livePage.goto(base+'leetcode-progress/');await livePage.waitForFunction(()=>document.body.dataset.publicState==='published');assert.equal(await livePage.locator('#total').textContent(),'Confirmed solved count: '+state.value.document.solved.length);
   if(name!=='webkit')await livePage.screenshot({path:path.join(workspace,name+'-live-rights-safe-summary.png')});
   assert.deepEqual(liveErrors,[]);await live.close();
-  results.browsers.push({engine:name,version:browser.version(),mockCases:['A','B','C','D','E','F','G','J','K'],geometry:initial,layoutBuilds:1,greenPixel:green,
+  results.browsers.push({engine:name,version:browser.version(),mockCases:production?[]:['A','B','C','D','E','F','G','J','K'],geometry:initial,layoutBuilds:1,greenPixel:green,
    anonymous:true,livePublicCount:state.value.document.solved.length,liveResolvedIds:state.value.resolved.map(r=>r.problemId),sourceUpdatedAt:state.value.document.updatedAt,reads,liveReads});
  }finally{await browser.close();}
 }

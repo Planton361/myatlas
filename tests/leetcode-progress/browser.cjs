@@ -7,6 +7,7 @@ const source=require('../../src/leetcode-progress/loader.js').URL;
 // Before this repository has a public main, exercise its exact committed snapshot.
 // Production builds and live verification must always use the real anonymous GET.
 const preRelease=process.env.MYATLAS_PRE_RELEASE_PROGRESS==='1';
+const production=process.env.GITHUB_REF==='refs/heads/main';
 if(preRelease&&process.env.GITHUB_REF==='refs/heads/main')throw Error('Production must read live progress');
 const seed=preRelease?fs.readFileSync(path.join(root,'progress/leetcode/solved.json'),'utf8'):null;
 
@@ -68,6 +69,8 @@ async function visit(engine,name){
   await context.close();
 
   // Separate fresh context: fixtures never write storage belonging to the owner.
+  // Main acceptance uses only actual public responses, including Refresh above.
+  if(!production){
   const mocked=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   let mode='offline',value=doc(),requests=0;
   await mocked.route(source,route=>{
@@ -88,6 +91,7 @@ async function visit(engine,name){
   mode='ok';value=doc([]);await p.locator('#refresh').click();await settled('published');assert.equal(await p.locator('#total').innerText(),count(0));
   assert.deepEqual(errors,[]);assert(requests>=7);await mocked.close();
   row.checks.push('Fresh offline is unknown; recovery; duplicate elimination; authoritative undo; failed/malformed refresh is stale; valid empty source is zero');
+  }
   results.push(row);
  }finally{await browser.close();}
 }

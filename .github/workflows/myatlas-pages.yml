@@ -85,6 +85,14 @@ jobs:
           scripts/knowledge_atlas/node_modules/.bin/playwright install --with-deps chromium webkit
       - name: Full isolated Pages and browser acceptance (no deployment)
         run: python3 -B scripts/validate-pages-candidate.py --evidence-root build/evidence/hyperskill-projects
+      - name: Validate main context with anonymous live public progress (no deployment)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_REF: refs/heads/main
+          MYATLAS_PRE_RELEASE_PROGRESS: '1' # The entrypoint must override inherited fixture mode.
+        run: |
+          cp test-results/pages-candidate.json test-results/pages-candidate-pr.json
+          python3 -B scripts/validate-pages-candidate.py --evidence-root build/evidence/hyperskill-projects
       - name: Preserve committed evidence and frozen sources
         run: git diff --exit-code -- docs/knowledge-map state/knowledge-atlas data/knowledge src/myatlas
       - uses: actions/upload-artifact@v4

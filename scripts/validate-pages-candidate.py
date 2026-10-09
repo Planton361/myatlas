@@ -23,10 +23,17 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     evidence = args.evidence_root.resolve(strict=True)
-    env = dict(os.environ, HYPERSKILL_EVIDENCE_ROOT=str(evidence), MYATLAS_PRE_RELEASE_PROGRESS='1')
-    # GITHUB_SHA refers to Hyperskill when invoked cross-repository.
-    env.pop('GITHUB_SHA', None)
-    report = dict(status='RUNNING', deployment='disabled', evidence_commit=subprocess.check_output(['git','-C',str(evidence),'rev-parse','HEAD']).decode().strip())
+    production = os.environ.get('GITHUB_REF') == 'refs/heads/main'
+    env = dict(os.environ, HYPERSKILL_EVIDENCE_ROOT=str(evidence),
+               MYATLAS_PRE_RELEASE_PROGRESS='0' if production else '1')
+    # Cross-repository previews may carry Hyperskill's SHA. Main must retain
+    # GitHub's expected application SHA for the existing production guard.
+    if not production:
+        env.pop('GITHUB_SHA', None)
+    report = dict(status='RUNNING', deployment='disabled',
+                  github_ref=env.get('GITHUB_REF'),
+                  public_progress_mode='anonymous-live' if production else 'isolated-pre-release',
+                  evidence_commit=subprocess.check_output(['git','-C',str(evidence),'rev-parse','HEAD']).decode().strip())
     out = root/'test-results/pages-candidate.json'
     out.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -34,7 +41,8 @@ def main():
             'scripts.tests.test_course_completion','scripts.tests.test_git_project_completion',
             'scripts.tests.test_myatlas_release','scripts.tests.test_myatlas_navigation',
             'scripts.tests.test_external_completion','scripts.tests.test_project_sync',
-            'scripts.tests.test_leetcode_progress','scripts.tests.test_leetcode_cpu'],env)
+            'scripts.tests.test_leetcode_progress','scripts.tests.test_leetcode_cpu',
+            'scripts.tests.test_pages_candidate'],env)
         for test in ('progress-analytics','universal-progress','completion','portfolio','copy','geometry-measurements'):
             run(root,['node','tests/myatlas/'+test+'.cjs'],env)
         run(root,['node','--test','tests/leetcode-progress/loader.cjs'],env)
