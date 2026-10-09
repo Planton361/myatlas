@@ -38,6 +38,7 @@ def main():
             for check in ([],['--check']):
                 run(root,[sys.executable,'-B','scripts/'+script,*check,*extra],env)
         run(root,[sys.executable,'-B','-m','unittest','scripts.tests.test_presentation_release'],env)
+        run(root,['node','tests/myatlas/progress-geometry.cjs'],env)
         for script in ('build-leetcode-progress.py','build-leetcode-atlas.py'):
             run(root,[sys.executable,'-B','scripts/'+script],env)
         if not (root/'scripts/knowledge_atlas/node_modules/playwright').exists():
