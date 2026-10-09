@@ -1,9 +1,13 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-09T11:30:47.533Z",
+  "updatedAt": "2026-10-09T17:10:08.852Z",
   "solved": [
     {
       "problemId": "lc:problem:eval-00141",
+      "source": "manual-owner-attestation"
+    },
+    {
+      "problemId": "lc:problem:eval-00303",
       "source": "manual-owner-attestation"
     },
     {
