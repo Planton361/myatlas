@@ -27,7 +27,7 @@ try{
    if(match)visible.add(id);
    node.setAttribute('aria-label',node.dataset.baseName+(match?'; in selected scope':''));
   }
-  for(const legend of [document.querySelector('#progress-scope-legend'),key])if(legend){legend.hidden=!scope;legend.textContent=scope?`Topics in selected scope · ${visible.size} visible / ${ids.size} assigned${scope.state==='UNKNOWN'?' · Requirements unknown':''}`:'';}
+  for(const legend of [document.querySelector('#progress-scope-legend'),key])if(legend){legend.hidden=!scope;legend.textContent=scope?(scope.state==='UNKNOWN'?'Topics in selected scope · Requirements unknown':`Topics in selected scope · ${visible.size} visible / ${ids.size} assigned`):'';}
  }
  function renderPanel(){
   const association=course==null?null:ux.association(course);

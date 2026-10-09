@@ -26,7 +26,7 @@
       "operation": "insert"
     },
     "views/knowledge-atlas-v6-skill-tree/progress-ui.js": {
-      "after": "7f815d6db92a59da502fb0c31cb5a82d9a78204b41f8d5fadc57e49aa3831a24",
+      "after": "66fc520f46aaf2ea9c0f0aed8749935b8374149ffe6be8d0ffc65df0606e322f",
       "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/progress-ui.js",
       "before": "93891bbd2eebc8fb09576569ac3e45ae999aa27cb85469ae476283b83947ea30",
       "operation": "replace",
@@ -44,7 +44,7 @@
   "schema": 1,
   "sources": {
     "docs/knowledge-map/progress.json": "a6da143c5eae639870c31bfa8d86ebe2f3b73e46486ba63cb9398bfa24016de8",
-    "src/supplements/progress-scope-v1/progress-ui.js": "7f815d6db92a59da502fb0c31cb5a82d9a78204b41f8d5fadc57e49aa3831a24",
+    "src/supplements/progress-scope-v1/progress-ui.js": "66fc520f46aaf2ea9c0f0aed8749935b8374149ffe6be8d0ffc65df0606e322f",
     "src/supplements/progress-scope-v1/scope.css": "78e4a649f0b6d0414d83c943cd1689cb773d6e6335169e34c86536f7939cebbc"
   },
   "version": "progress-scope-v1"
