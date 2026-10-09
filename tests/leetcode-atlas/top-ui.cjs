@@ -11,7 +11,7 @@ const results={phase,status:'RUNNING',rows:[],realWrites:0};
 // Production builds and live verification must always use the real anonymous GET.
 const preRelease=process.env.MYATLAS_PRE_RELEASE_PROGRESS==='1';
 if(preRelease&&process.env.GITHUB_REF==='refs/heads/main')throw Error('Production must read live progress');
-const seed=preRelease?fs.readFileSync(path.join(root,'progress/leetcode/solved.json'),'utf8'):null;
+const seed=preRelease?fs.readFileSync(path.resolve(__dirname,'../../progress/leetcode/solved.json'),'utf8'):null;
 
 function upperBoxes(){
  const selectors=['#application-header h1','#application-nav a','#difficulty-field','#availability-field','#branch-menu>summary','#reset-filters','#search','#search-results',
