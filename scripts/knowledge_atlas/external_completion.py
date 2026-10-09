@@ -27,7 +27,7 @@ def external_inputs(root, evidence_root, ref='HEAD'):
     if any(n.split('/')[0] not in ('java','python') for n in manifests):
         raise ValueError('Unsupported canonical export language')
     for name in entries:
-        if name.split('/')[0] in ('java','python') and '/'.join(name.split('/')[:2])+'/.hyperskill-import.json' not in manifests:
+        if len(name.split('/')) >= 3 and name.split('/')[0] in ('java','python') and '/'.join(name.split('/')[:2])+'/.hyperskill-import.json' not in manifests:
             raise ValueError('Canonical project directory missing export manifest: ' + name)
     if not manifests:
         raise ValueError("No canonical project exports found; preserve previous deployment")
