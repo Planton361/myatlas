@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 from .git_completion import committed_inputs, git
-from .project_completion import scan
+from .external_export_scan import scan
 
 REPOSITORY = 'Planton361/hyperskill-projects'
 
@@ -58,7 +58,7 @@ def project_external(root, evidence_root, ref='HEAD'):
              'scripts/knowledge_atlas/project_completion.py', 'scripts/knowledge_atlas/course_completion.py',
              'scripts/knowledge_atlas/completion_projection.cjs',
              'src/myatlas/knowledge-atlas-v6-skill-tree/progress-analytics.js',
-             'scripts/knowledge_atlas/external_completion.py', 'scripts/sync-hyperskill-projects.py',
+             'scripts/knowledge_atlas/external_completion.py', 'scripts/knowledge_atlas/external_export_scan.py', 'scripts/sync-hyperskill-projects.py',
              'scripts/build-myatlas-external.py', 'scripts/knowledge_atlas/external_release.py']
     inputs['source']['implementation_sha256'] = {}
     for name in names:

@@ -1,4 +1,4 @@
-"""Offline owner-attested export discovery; never modifies personal Knowledge."""
+"""External schema-2 Java/Python export contract v1; frozen historical scanner remains intact."""
 import hashlib
 import json
 import re
@@ -32,7 +32,7 @@ def scan(root, scopes):
     root = Path(root).resolve()
     projects = {p['scope_id']: p for p in scopes['projects']}
     completed, rejected, statuses = [], [], {}
-    for path in sorted(root.glob('java/*/.hyperskill-import.json')):
+    for path in sorted([*root.glob('java/*/.hyperskill-import.json'), *root.glob('python/*/.hyperskill-import.json')]):
         relative = path.parent.relative_to(root).as_posix()
         try:
             if path.is_symlink() or any(p.is_symlink() for p in [path.parent, path.parent.parent]):
@@ -40,12 +40,17 @@ def scan(root, scopes):
             manifest = json.loads(path.read_text())
             if not isinstance(manifest, dict) or manifest.get('schema') != 2 or not isinstance(manifest.get('files'), dict) or not manifest['files']:
                 raise ValueError('Validated schema-2 export manifest required')
-            if manifest.get('language') != 'java' or manifest.get('directory_name') != path.parent.name:
+            if manifest.get('language') not in ('java', 'python') or manifest.get('language') != path.parent.parent.name or manifest.get('directory_name') != path.parent.name:
                 raise ValueError('Export language/directory metadata mismatch')
             required = {'build.gradle.kts', 'settings.gradle.kts', 'gradlew', 'gradlew.bat',
                         'gradle/wrapper/gradle-wrapper.jar', 'gradle/wrapper/gradle-wrapper.properties'}
-            if not required <= manifest['files'].keys() or not any(n.startswith('src/main/java/') and n.endswith('.java') for n in manifest['files']):
+            if manifest['language'] == 'java' and (not required <= manifest['files'].keys() or not any(n.startswith('src/main/java/') and n.endswith('.java') for n in manifest['files'])):
                 raise ValueError('Incomplete standalone Java export')
+            if manifest['language'] == 'python':
+                if manifest.get('python_version') != '3.12' or manifest.get('dependencies') != [] or manifest.get('entrypoint') not in manifest['files'] or not manifest['entrypoint'].endswith('.py'):
+                    raise ValueError('Incomplete standalone Python export')
+                if any(not n.startswith('src/') or Path(n).suffix not in ('.py', '.txt', '.json', '.csv') for n in manifest['files']):
+                    raise ValueError('Unsupported Python export member')
             for name, digest in manifest['files'].items():
                 member = Path(name)
                 if member.is_absolute() or '..' in member.parts or str(member) != name or not re.fullmatch(r'[a-f0-9]{64}', str(digest)):
