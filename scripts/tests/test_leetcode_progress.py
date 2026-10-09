@@ -40,7 +40,7 @@ class SummaryBoundary(unittest.TestCase):
                 builder.reviewed_assets(source)
 
     def test_readme_discovery_and_frozen_shell_separation(self):
-        self.assertIn('https://planton361.github.io/hyperskill-projects/leetcode-progress/', (ROOT / 'README.md').read_text())
+        self.assertIn('https://planton361.github.io/myatlas/leetcode-progress/', (ROOT / 'README.md').read_text())
         self.assertEqual(builder.OUTPUT, ROOT / 'build/pages/leetcode-progress')
         self.assertNotIn(ROOT / 'src/myatlas', builder.SOURCE.parents)
 
