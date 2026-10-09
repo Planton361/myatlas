@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../..');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||path.join(root,'scripts/knowledge_atlas/node_modules/playwright'));
-const base=process.env.ATLAS_PREVIEW||'http://127.0.0.1:8807/hyperskill-projects/knowledge-map/';
+const base=process.env.ATLAS_PREVIEW||'http://127.0.0.1:8807/myatlas/knowledge-map/';
 const publicURL='https://raw.githubusercontent.com/Planton361/myatlas-leetcode-progress/main/solved.json';
 const out=process.env.NAV_ARTIFACT_DIR||path.join(root,'test-results/navigation');
 const widths=[2048,1440,1280,1024,768,390],results=[];

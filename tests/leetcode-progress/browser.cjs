@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../..');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||path.join(root,'scripts/knowledge_atlas/node_modules/playwright'));
-const base=process.env.LEETCODE_PREVIEW||'http://127.0.0.1:8807/hyperskill-projects/leetcode-progress/';
+const base=process.env.LEETCODE_PREVIEW||'http://127.0.0.1:8807/myatlas/leetcode-progress/';
 const source=require('../../src/leetcode-progress/loader.js').URL;
 const artifact=process.env.LEETCODE_ARTIFACT_DIR||path.join(root,'test-results');
 const fixtureRow={problemId:'lc:problem:p0001',source:'manual-owner-attestation'};

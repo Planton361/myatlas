@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||path.resolve(__dirname,'../../scripts/knowledge_atlas/node_modules/playwright'));
 const R=require('../../src/leetcode-progress/loader.js'),workspace=path.resolve(process.argv[2]),phase=process.argv[3]||'after';
-const base=process.env.CPU_PREVIEW||'http://127.0.0.1:8807/hyperskill-projects/leetcode-atlas/';
+const base=process.env.CPU_PREVIEW||'http://127.0.0.1:8807/myatlas/leetcode-atlas/';
 const widths=[2048,1440,1280,1024,768,390],expected='c23469da99adc627db3a52d89d316082e53514d8d7210e46c1b13cc8296504a6';
 const hash=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const geo=()=>LeetCodeAtlas.state().L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.physicalParent,n.data.problem?.primaryTaxonomyId]);

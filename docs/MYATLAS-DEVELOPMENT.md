@@ -1,3 +1,5 @@
+> Current hosting and project-source separation: [REPOSITORY-SEPARATION.md](REPOSITORY-SEPARATION.md). The original V6.6 contract below remains the immutable baseline; current builds additionally apply the navigation and external-evidence supplements.
+
 # MyAtlas development and release integrity
 
 Use `scripts/build-myatlas.py` to package the accepted two-tab application into `build/pages/knowledge-map/`. It reads the current Git HEAD's export evidence, resolves exact semantic IDs, reuses the accepted aggregation, and generates `progress.json` plus `runtime-manifest.json`. Repeated builds at the same HEAD are byte-identical. Every browser runtime source is tracked; npm is needed only for locked browser validation tooling.

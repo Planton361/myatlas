@@ -1,3 +1,5 @@
+> Historical handoff. Current MyAtlas maintenance is described in [README.md](README.md) and [repository separation](docs/REPOSITORY-SEPARATION.md). Project sources/import tooling now live in `Planton361/hyperskill-projects`.
+
 # Mac handoff — adaptive Knowledge Atlas adopted
 
 ## Current authoritative state

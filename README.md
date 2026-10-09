@@ -1,55 +1,63 @@
-# MyAtlas V6.6
+# MyAtlas
 
-[Open MyAtlas](https://planton361.github.io/hyperskill-projects/knowledge-map/)
+An interactive view of my programming learning: Hyperskill concepts and project coverage, my personal Skill Tree, and confirmed LeetCode progress.
 
-MyAtlas is my learning atlas and owner-attested Hyperskill project portfolio. Its two views connect a complete **Global Atlas** with **My Skill Tree**. Explore 849 Categories and 3,106 Topics, or select an independent Course, Project, or Stage pyramid. Search, the shared Inspector, exact-ID navigation, and browser history work across the views.
+| View | Open |
+| --- | --- |
+| Hyperskill Atlas · global concepts and Course / Project / Stage focus | [Atlas](https://planton361.github.io/myatlas/knowledge-map/?view=atlas) |
+| Personal learning and independently verified topics | [My Skill Tree](https://planton361.github.io/myatlas/knowledge-map/?view=skill-tree) |
+| LeetCode CPU floorplan with green confirmed solved cards | [LeetCode Atlas](https://planton361.github.io/myatlas/leetcode-atlas/) |
+| Compact, read-only public LeetCode progress | [Progress summary](https://planton361.github.io/myatlas/leetcode-progress/) |
 
-The current portfolio records **31 learned Topics**, **12 independently verified Topics**, and **1 completed Project**: Simple Chat Bot with Java (Project113). Course8 has 31 / 89 learned Topics and 1 / 11 associated Projects completed. Catalog inventories—52 Courses, 391 Projects, and 1,967 Stages—describe the atlas, not my enrolled plan or official overall completion.
+All three map views have a persistent navigation link to LeetCode. Visitors can use Chrome or Safari without authentication or the owner's extension.
 
-Learning is the exact-ID union of directly observed personal learning and explicit Topic requirements of owner-attested completed Projects. Project completion provides owner-attested learning evidence; it is **not independent Hyperskill verification**. It does not establish Course or Stage completion. Missing completion records are omitted from the compact UI; provenance and evidence dates remain available in collapsed Data details.
+## Projects and progress sources
 
-## LeetCode Progress
+The runnable Hyperskill applications live in [Planton361/hyperskill-projects](https://github.com/Planton361/hyperskill-projects). This repository contains the visualizations, catalogs, evidence tools and static Pages release; it does not duplicate those project exports in its current source tree.
 
-[Open LeetCode Progress](https://planton361.github.io/hyperskill-projects/leetcode-progress/)
+The Pages build reads committed exports from the public project repository, validates their exact IDs and file inventories, and uses the existing accepted aggregator. The build records both the MyAtlas release SHA and the Hyperskill evidence SHA. Missing, unavailable or rejected source data stops the build and leaves the last deployed view intact. After publishing a new completed project, run **MyAtlas Pages** from this repository's Actions tab to rebuild from the latest project evidence. No cross-repository publishing token is required.
 
-This separate public summary reads owner-confirmed Problem IDs and attestations from [the progress-only repository](https://github.com/Planton361/myatlas-leetcode-progress). Counts refresh from the public source; visitors need no Chrome extension or authentication. It publishes no problem catalog, descriptions or solutions. The summary is independent of the separate CPU Atlas snapshot.
+The separation preserves the current Hyperskill portfolio: **1 completed project**, **31 learned Topics** and **12 independently verified Topics**. Introduction to Java has 31 / 89 learned Topics and 1 / 11 associated Projects completed. These are distinct evidence-backed measures, not an assertion that a whole Course or Stage is completed. The catalog's 52 Courses, 391 Projects, 1,967 Stages, 849 Categories and 3,106 Topics describe the reference landscape, not my enrolled plan.
 
-[Summary build, validation and release boundary](docs/LEETCODE-PROGRESS-RELEASE.md)
+LeetCode progress is fetched dynamically from [Planton361/myatlas-leetcode-progress](https://github.com/Planton361/myatlas-leetcode-progress), `solved.json`. Only owner-confirmed exact Problem IDs, attestation sources and update metadata are read. Counts are not hardcoded. An unavailable first load remains explicitly unavailable; a failed refresh preserves the last validated snapshot. The owner's Chrome extension remains a separate capture/publishing tool with manual confirmation when Accepted detection is uncertain. No credentials, solutions or descriptions are sent to visitors.
 
-## LeetCode CPU Atlas
+## LeetCode catalog boundary
 
-[Open LeetCode CPU Atlas](https://planton361.github.io/hyperskill-projects/leetcode-atlas/)
+The CPU view contains 3,511 identities from the already approved pinned community metadata snapshot. It is a dated partial snapshot, not a claim of today's official complete LeetCode catalog. It includes no problem statements or solutions. [Attribution and the owner-approved publication scope](docs/LEETCODE-CPU-RELEASE.md). The compact progress summary is logically independent of that metadata catalog.
 
-The accepted CPU floorplan displays 3,511 unique Problem identities from a pinned community metadata snapshot, with filters, search, Category Focus and green cards driven by the same live confirmed progress. This snapshot is not a claim of today’s official complete LeetCode catalog. No problem statements, descriptions or solutions are included. [Source attribution, publisher-declared MIT license and owner-approved release scope](docs/LEETCODE-CPU-RELEASE.md). Hyperskill V6.6 remains independent and unchanged.
+## Structure
 
-## Exported Hyperskill Projects
+```text
+src/myatlas/             Accepted Hyperskill V6.6 runtime
+src/leetcode-atlas/      Accepted CPU Atlas source and snapshot
+src/leetcode-progress/   Shared anonymous public progress reader and summary
+scripts/                Evidence validation, build and release tooling
+data/, state/           Public learning evidence and protected history
+tests/                  Focused runtime, progress and geometry checks
+docs/                   Release guides, immutable baselines and reviews
+```
 
-Each export remains a standalone application with its source and build wrapper.
+The V6.6 release manifest and canonical runtime remain unchanged. The separately pinned navigation supplement adds the LeetCode return link. Moving the repository changes hosting/provenance, not map geometry, identities, progress semantics or confirmed solves. [Repository separation](docs/REPOSITORY-SEPARATION.md).
 
-| Project | Language | Source |
-| --- | --- | --- |
-| Simple Chat Bot with Java · Project113 | Java | [Export and instructions](java/Simple%20Chat%20Bot%20with%20Java/) |
+## Build locally
 
-[All Java exports](java/). Importing and publishing a new completed export activates the same validated completion scanner and Topic union—no Hyperskill API, scraping, or synthetic achievements. The **MyAtlas Pages** workflow validates committed evidence, rebuilds public progress, and deploys the static artifact from `main`; it never commits generated files back to Git.
-
-## Local development
-
-Python3 and Node22 build the static application without npm runtime dependencies:
+From a committed checkout, with Python 3 and Node 22, and a local checkout of the public Hyperskill project repository:
 
 ```sh
 python3 -B scripts/build-myatlas.py
+python3 -B scripts/check-myatlas-production.py --site build/pages/knowledge-map --current-head
+python3 -B scripts/build-myatlas-navigation.py
+python3 -B scripts/build-myatlas-external.py --evidence-root ../hyperskill-projects
+python3 -B scripts/build-myatlas-external.py --check --evidence-root ../hyperskill-projects
 python3 -B scripts/build-leetcode-progress.py
 python3 -B scripts/build-leetcode-atlas.py
-python3 -B scripts/check-myatlas-production.py --site build/pages/knowledge-map --current-head
 mkdir -p build/preview
-ln -s ../pages build/preview/hyperskill-projects
+ln -s ../pages build/preview/myatlas
 python3 -B -m http.server 8807 --bind 127.0.0.1 --directory build/preview
 ```
 
-Open `http://127.0.0.1:8807/hyperskill-projects/knowledge-map/`. The summary is at `/hyperskill-projects/leetcode-progress/` and the CPU snapshot at `/hyperskill-projects/leetcode-atlas/`. Use a fresh preview directory, or retain its existing symlink when rebuilding.
+Open `http://127.0.0.1:8807/myatlas/knowledge-map/`. Retain an existing preview symlink when rebuilding. Use the current committed Hyperskill `main` for evidence; the reader ignores local uncommitted files. Generated files stay in ignored `build/pages/`.
 
-Canonical accepted sources are in `src/myatlas/`; public completion records are in `data/myatlas/`; historical Knowledge observations and State remain intact. `docs/knowledge-map/` is the reviewed committed production snapshot; Actions builds the current projection into an artifact, so source updates need no generated-data commit loop.
+[Maintenance and validation](scripts/README.md) · [Original V6.6 integrity contract](docs/MYATLAS-DEVELOPMENT.md) · [Navigation supplement](docs/LEETCODE-NAVIGATION-RELEASE.md)
 
-[Build, validation and evidence contract](docs/MYATLAS-DEVELOPMENT.md) · [Release and rollback](docs/V66-PRODUCTION-RELEASE.md) · [Rollback procedure](docs/MYATLAS-ROLLBACK.md)
-
-Earlier experimental applications and generated comparison imagery have been removed. The small frozen compatibility fixtures that remain support historical State reconstruction; they are not public deployment sources. [Current release](https://github.com/Planton361/hyperskill-projects/tree/v6.6.0) · [Cleanup inventory](docs/releases/v66-cleanup-inventory.json).
+Earlier `/hyperskill-projects/knowledge-map/`, `/leetcode-atlas/` and `/leetcode-progress/` bookmarks are retained through redirects in the project repository. Their query parameters and hashes continue to select the corresponding view.

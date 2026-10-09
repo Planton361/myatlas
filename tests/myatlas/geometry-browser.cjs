@@ -1,6 +1,6 @@
 /* Structured cross-platform reproducibility and full-label containment, twice. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto'),{chromium,launchOptions}=require('./browser.cjs');
-const root=path.resolve(__dirname,'../..'),base=process.env.ATLAS_PREVIEW||'http://127.0.0.1:8807/hyperskill-projects/knowledge-map/';
+const root=path.resolve(__dirname,'../..'),base=process.env.ATLAS_PREVIEW||'http://127.0.0.1:8807/myatlas/knowledge-map/';
 const expected={global:'1306993ec8a1b7a80edda4f620fb96ba5d4803c0d81ded334b92efa85cdf1174',personal:'a60fc22e272079c91f39cfed9c01af5865bae29120e6d6f7801b02da96cd6348',course8:'ab8e05971ca8fb9d077b491a766554f5b84118e068433afe4c17faa7e91fb89b',project113:'33dc51873bcbd33fa6ad2de854dd719e525706bdb764a50578570d1f73e89034',stage617:'24edf473c9e97b7ccbb287464302a4bbf6ffadff33efdc265076b5ae6b51455e'};
 (async()=>{const browser=await chromium.launch(launchOptions);try{const result={browser:browser.version(),runs:[]};for(let run=0;run<2;run++){
  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),rows={},errors=[];page.on('pageerror',e=>errors.push(e.message));

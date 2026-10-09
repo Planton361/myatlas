@@ -17,6 +17,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Read canonical public Hyperskill project exports
+        uses: actions/checkout@v4
+        with:
+          repository: Planton361/hyperskill-projects
+          ref: main
+          path: build/evidence/hyperskill-projects
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -26,7 +34,7 @@ jobs:
       - name: Validate committed edition and completion evidence
         run: |
           python3 -B scripts/check-myatlas-production.py
-          python3 -B -m unittest scripts.tests.test_course_completion scripts.tests.test_git_project_completion scripts.tests.test_myatlas_release scripts.tests.test_myatlas_navigation
+          python3 -B -m unittest scripts.tests.test_course_completion scripts.tests.test_git_project_completion scripts.tests.test_myatlas_release scripts.tests.test_myatlas_navigation scripts.tests.test_external_completion
           for test in progress-analytics universal-progress completion portfolio copy geometry-measurements; do node "tests/myatlas/$test.cjs"; done
       - name: Validate rights-safe LeetCode summary sources
         run: |
@@ -34,7 +42,7 @@ jobs:
           node --test tests/leetcode-progress/loader.cjs
       - name: Generate public evidence and readable differential summary
         run: |
-          python3 -B scripts/sync-project-completion.py > "$RUNNER_TEMP/progress-review.json"
+          python3 -B scripts/sync-hyperskill-projects.py --evidence-root build/evidence/hyperskill-projects > "$RUNNER_TEMP/progress-review.json"
           python3 -B scripts/sync-project-completion.py --summary < "$RUNNER_TEMP/progress-review.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Build the Pages artifact from committed sources
         run: |
@@ -45,6 +53,10 @@ jobs:
         run: |
           python3 -B scripts/build-myatlas-navigation.py
           python3 -B scripts/build-myatlas-navigation.py --check
+      - name: Bind progress to canonical Hyperskill project exports
+        run: |
+          python3 -B scripts/build-myatlas-external.py --evidence-root build/evidence/hyperskill-projects
+          python3 -B scripts/build-myatlas-external.py --check --evidence-root build/evidence/hyperskill-projects
       - name: Package the sibling LeetCode progress route
         run: python3 -B scripts/build-leetcode-progress.py
       - name: Package the owner-approved CPU Atlas sibling route
@@ -54,14 +66,16 @@ jobs:
           npm ci --prefix scripts/knowledge_atlas --ignore-scripts
           scripts/knowledge_atlas/node_modules/.bin/playwright install --with-deps chromium webkit
       - name: Validate the actual repository base path
+        env:
+          HYPERSKILL_EVIDENCE_ROOT: build/evidence/hyperskill-projects
         run: |
           mkdir -p build/preview
-          ln -s ../pages build/preview/hyperskill-projects
+          ln -s ../pages build/preview/myatlas
           python3 -B -m http.server 8807 --bind 127.0.0.1 --directory build/preview > "$RUNNER_TEMP/preview.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:8807/hyperskill-projects/knowledge-map/ > /dev/null; then break; fi
+            if curl --fail --silent http://127.0.0.1:8807/myatlas/knowledge-map/ > /dev/null; then break; fi
             sleep 1
           done
           node tests/myatlas/release.cjs

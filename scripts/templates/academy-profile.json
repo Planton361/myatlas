@@ -1,7 +1,0 @@
-{
-  "description": "Reviewed legacy Academy Java console scaffold; dynamic JavaVersion.current(), hs-test, empty util, recursive task discovery. Unknown bytes require review.",
-  "files": {
-    "build.gradle": "94dbe0944efe0bc5a20fa9f58c00f4815da3ec1af2621b4d4cefb038f732894c",
-    "settings.gradle": "fcfb42002285037dead8e6dbd534cce0ccd7cf2f6a4f44152f4d0c02721e2b8a"
-  }
-}
