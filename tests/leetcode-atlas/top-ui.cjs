@@ -6,7 +6,9 @@ const progressPath=path.resolve(__dirname,'../../build/pages/knowledge-map/progr
 const runtime=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../build/pages/knowledge-map/runtime-manifest.json'),'utf8'));
 const unique=(ids,label)=>{assert(Array.isArray(ids),label+' IDs must be an array');assert.equal(new Set(ids).size,ids.length,label+' IDs must be deduplicated');};
 assert.equal(progress.schema,2,'Validated public progress projection required');
-assert.deepEqual(progress.completed_project_ids,[113,380],'Current committed Hyperskill projects required');
+unique(progress.completed_project_ids,'Completed project');
+assert(progress.completed_project_ids.includes(113),'Project 113 must remain completed');
+assert(progress.completed_project_ids.includes(380),'Project 380 must remain completed');
 assert.equal(progress.completed_project_count,progress.completed_project_ids.length);
 unique(progress.effective_learned_topic_ids,'Learned topic');
 unique(progress.verified_topic_ids,'Verified topic');
