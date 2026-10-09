@@ -4,13 +4,49 @@ on:
     branches: [main, 'release/**']
     paths-ignore: ['progress/leetcode/**']
   workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * *" # Daily 05:23 UTC, default branch only.
 permissions:
   contents: read
 concurrency:
   group: myatlas-pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  project-check:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      build: ${{ steps.decision.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Read latest canonical public project main
+        uses: actions/checkout@v4
+        with:
+          repository: Planton361/hyperskill-projects
+          ref: main
+          path: build/evidence/hyperskill-projects
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test conservative daily revision decisions
+        run: python3 -B -m unittest scripts.tests.test_project_sync
+      - name: Validate evidence and compare deployed revisions
+        id: decision
+        env:
+          WORKFLOW_EVENT: ${{ github.event_name }}
+        run: python3 -B scripts/check-project-sync.py --evidence-root build/evidence/hyperskill-projects --event "$WORKFLOW_EVENT" --github-output "$GITHUB_OUTPUT"
   build:
+    needs: project-check
+    if: needs.project-check.outputs.build == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -105,7 +141,7 @@ jobs:
         with:
           path: build/pages
   deploy:
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
     needs: build
     runs-on: ubuntu-24.04
     permissions:
