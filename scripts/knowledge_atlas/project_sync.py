@@ -81,11 +81,22 @@ def decide(root, evidence_root, event, read=public_read):
     if event != 'schedule':
         return result
     try:
-        deployed_app, deployed_project = deployed_revisions(read)
+        captured = {}
+        def capture(name):
+            captured[name] = read(name)
+            return captured[name]
+        deployed_app, deployed_project = deployed_revisions(capture)
         current_main = latest_main()
     except (OSError, ValueError, TypeError, KeyError, AttributeError, subprocess.SubprocessError):
         result['reason'] = 'Deployed comparison unavailable or invalid; full validated build required'
         return result
+    # The deployed bytes have already been bound to their runtime manifest.
+    deployed = json.loads(captured['progress.json'])
+    if isinstance(deployed.get('effective_learned_topic_ids'), list):
+        previous = set(deployed['effective_learned_topic_ids'])
+        result.update(newly_learned_topic_ids=sorted(set(projection['effective_learned_topic_ids'])-previous),
+                      already_known_topic_ids=sorted(set(projection['project_learned_topic_ids'])&previous),
+                      comparison_baseline='validated_deployed_projection')
     unchanged = deployed_app == app == current_main and deployed_project == project
     result.update(build_status='skipped' if unchanged else 'pending', deploy_status='skipped' if unchanged else 'pending', build=not unchanged,
                   reason='Both deployed revisions conclusively unchanged' if unchanged else
