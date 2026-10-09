@@ -2,6 +2,22 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||path.resolve(__dirname,'../../scripts/knowledge_atlas/node_modules/playwright'));
 const R=require('../../src/leetcode-progress/loader.js'),workspace=path.resolve(process.argv[2]),phase=process.argv[3]||'after';
+const progressPath=path.resolve(__dirname,'../../build/pages/knowledge-map/progress.json'),progressBytes=fs.readFileSync(progressPath),progress=JSON.parse(progressBytes.toString('utf8'));
+const runtime=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../build/pages/knowledge-map/runtime-manifest.json'),'utf8'));
+const unique=(ids,label)=>{assert(Array.isArray(ids),label+' IDs must be an array');assert.equal(new Set(ids).size,ids.length,label+' IDs must be deduplicated');};
+assert.equal(progress.schema,2,'Validated public progress projection required');
+unique(progress.completed_project_ids,'Completed project');
+assert(progress.completed_project_ids.includes(113),'Project 113 must remain completed');
+assert(progress.completed_project_ids.includes(380),'Project 380 must remain completed');
+assert.equal(progress.completed_project_count,progress.completed_project_ids.length);
+unique(progress.effective_learned_topic_ids,'Learned topic');
+unique(progress.verified_topic_ids,'Verified topic');
+assert.equal(progress.global.learned,progress.effective_learned_topic_ids.length,'Projection learned count must match deduplicated topic IDs');
+assert.equal(progress.global.verified,progress.verified_topic_ids.length,'Projection verified count must match deduplicated topic IDs');
+assert.equal(progress.source.project_repository,'Planton361/hyperskill-projects');
+assert.equal(runtime.project_source.repository,progress.source.project_repository);
+assert.equal(runtime.project_source.commit,progress.source.project_commit);
+assert.equal(runtime.inventory['progress.json'],crypto.createHash('sha256').update(progressBytes).digest('hex'),'Runtime manifest must bind the validated projection');
 const base=process.env.CPU_PREVIEW||'http://127.0.0.1:8807/myatlas/leetcode-atlas/';
 const widths=[2048,1440,1280,1024,768,390],expected='c23469da99adc627db3a52d89d316082e53514d8d7210e46c1b13cc8296504a6';
 const hash=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -78,14 +94,14 @@ async function run(engine,name,options){
    // bootstrap. Finish that load before this test deliberately leaves the page.
    await page.waitForLoadState('networkidle');
    assert.deepEqual(await page.locator('#application-nav a').allTextContents(),['Atlas','My Skill Tree','LeetCode']);
-   assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.learned),31);
+   assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.learned),progress.global.learned);
    await page.goto(cpuURL);await page.waitForFunction(()=>document.body.dataset.publicState==='published');
    await page.waitForLoadState('networkidle');
    await page.locator('#nav-skill-tree').click();
    await page.waitForFunction(()=>window.AtlasShell&&document.querySelector('#loading').hidden&&AtlasShell.state().route.view==='skill-tree'&&AtlasShell.state().activeFrame?.contentWindow.PublicProgress);
    await page.waitForLoadState('networkidle');
    assert.deepEqual(await page.locator('#application-nav a').allTextContents(),['Atlas','My Skill Tree','LeetCode']);
-   assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.verified),12);
+   assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.verified),progress.global.verified);
   }
   assert.deepEqual(errors,[]);results.rows.push({browser:name,version:browser.version(),width,geometry,initial,checks,anonymousPublicRequests:requests.length});await context.close();
  }}finally{await browser.close();}
