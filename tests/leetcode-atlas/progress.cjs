@@ -92,8 +92,17 @@ async function run(engine,name,options){
   await livePage.waitForFunction(()=>LeetCodeAtlas.state().transform.k>=1&&LeetCodeAtlas.lastPaint.styles.some(r=>r.key==='lc:problem:p0001'&&r.solved));
   // Moving the guide out of the canvas changes its screen size on focus.
   // ResizeObserver clears the backing buffer; sample only after the new paint.
-  await livePage.waitForFunction(()=>{const s=LeetCodeAtlas.state(),n=s.L.byKey.get('lc:problem:p0001'),pixel=document.getElementById('world').getContext('2d').getImageData(Math.round(n.x*s.transform.k+s.transform.x),Math.round((n.y+n.height*.78)*s.transform.k+s.transform.y),1,1).data;return pixel[0]===32&&pixel[1]===102&&pixel[2]===71&&pixel[3]===255;});
-  const livePixel=await livePage.evaluate(()=>{const s=LeetCodeAtlas.state(),n=s.L.byKey.get('lc:problem:p0001');return [...document.getElementById('world').getContext('2d').getImageData(Math.round(n.x*s.transform.k+s.transform.x),Math.round((n.y+n.height*.78)*s.transform.k+s.transform.y),1,1).data];});assert.deepEqual(livePixel,[32,102,71,255]);
+  // ResizeObserver can clear the backing buffer between separate Playwright
+  // calls. Wait for the exact painted sample and return it atomically, without
+  // relaxing the required RGBA color or accepting transparent pixels.
+  const livePixel=await (await livePage.waitForFunction(()=>{
+   const s=LeetCodeAtlas.state(),n=s.L.byKey.get('lc:problem:p0001');
+   const pixel=[...document.getElementById('world').getContext('2d').getImageData(
+    Math.round(n.x*s.transform.k+s.transform.x),
+    Math.round((n.y+n.height*.78)*s.transform.k+s.transform.y),1,1).data];
+   return pixel.every((value,i)=>value===[32,102,71,255][i])?pixel:false;
+  })).jsonValue();
+  assert.deepEqual(livePixel,[32,102,71,255]);
   if(name!=='webkit')await livePage.screenshot({path:path.join(workspace,name+'-live-two-sum-green.png')});
   assert.equal(hash(await livePage.evaluate(geometry)),expected);
   await livePage.goto(base+'leetcode-progress/');await livePage.waitForFunction(()=>document.body.dataset.publicState==='published');assert.equal(await livePage.locator('#total').textContent(),'Confirmed solved count: '+state.value.document.solved.length);
