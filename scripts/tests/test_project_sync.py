@@ -74,6 +74,26 @@ class ProjectSyncTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Rejected public exports'):
                 decide(ROOT,self.repo,event,lambda _:self.fail('Invalid evidence must never read/skip deployment'))
 
+    def test_source_only_unknown_project_completes_without_inferred_topics(self):
+        folder=self.repo/'java/Zookeeper with Java';source=folder/'src/main/java/Main.java';source.parent.mkdir(parents=True)
+        source.write_text('// Project topic 999999 is source text, not Atlas evidence.\nclass Main {}\n')
+        (folder/'README.md').write_text('# Zookeeper with Java\n\nhttps://hyperskill.org/projects/229\n')
+        manifest={'schema':3,'mode':'source-only','language':'java','directory_name':folder.name,
+                  'project_id':229,'completion':dict(project_id=229,status='completed',attested_by='owner',observed_at='2026-10-10T11:45:17Z'),
+                  'files':{'src/main/java/Main.java':hashlib.sha256(source.read_bytes()).hexdigest()}}
+        (folder/'.hyperskill-import.json').write_text(json.dumps(manifest))
+        self.fixture.commit()
+        review=project_external(ROOT,self.repo);projection=review['projection']
+        self.assertEqual(projection['completed_project_ids'],[113,229])
+        project=next(row for row in projection['projects'] if row['project_id']==229)
+        self.assertEqual(project['status'],'completed');self.assertEqual(project['observed_at'],'2026-10-10T11:45:17Z')
+        self.assertEqual(project['requirements_state'],'UNKNOWN');self.assertEqual(project['topic_ids'],[])
+        self.assertEqual(review['changes']['newly_learned_topic_ids'],[])
+        (folder/'.env').write_text('private=never-archive')
+        self.fixture.commit()
+        with self.assertRaisesRegex(ValueError,'Rejected public exports'):
+            project_external(ROOT,self.repo)
+
     def test_deployed_partial_or_wrong_projection_is_not_conclusive(self):
         for progress in ([],{'source':{}},{'source':{'commit':self.app,'project_repository':REPOSITORY,'project_commit':'b'*40}}):
             data=dict(self.bytes);raw=json.dumps(progress).encode();manifest=json.loads(data['runtime-manifest.json']);manifest['inventory']['progress.json']=hashlib.sha256(raw).hexdigest();data.update({'progress.json':raw,'runtime-manifest.json':json.dumps(manifest).encode()})
