@@ -71,3 +71,49 @@ LeetCode, tracker, frozen runtime, links and deployment artifacts intact. If new
 evidence fails validation, repair the project export in its own repository through
 review; the last successful Pages deployment stays live. No production deployment
 has been performed while preparing this change.
+
+## Progress scope presentation supplement v1
+
+The frozen V6.6 source inventory, release manifest and historical evidence remain
+byte-identical. `docs/releases/myatlas-progress-scope-v1.json` is a separately
+versioned, SHA-pinned build contract. It replaces the personal progress controller,
+adds presentation CSS and the existing `ScopeUXModel` entrypoint, and pins category
+counter measurements in Global/Scope layouts to the accepted geometry snapshot.
+These last two exact build-time substitutions prevent changing learned counts
+from changing card widths; displayed progress still uses the current projection.
+No packing rule, world coordinate, catalog membership or personal-tree layout is
+changed by scope selection.
+
+The build applies the supplement after navigation and external progress binding.
+Verification first checks every input/output hash and committed source, then
+reverses only the declared edits in a disposable copy and runs **all** previous
+external/navigation/V6.6 guards. Tests reject modified supplements, geometry,
+extra assets and forged progress even if the runtime inventory is rehashed.
+All five historical geometry fingerprints are retained. The historical personal
+fingerprint is checked with its accepted evidence snapshot; current personal trees
+are compared before/after each selection with the same current progress.
+
+Course/Project/Stage controls use `ScopeUXModel.projectChoices`, `stageChoices`,
+`normalize` and `current`, exactly as normal navigation. Unknown association data
+shows no guessed projects; known empty inventories stay empty. Stage selection
+has priority over Project, then Course. Marking uses deduplicated explicit Topic
+IDs, keeps learned/verified status indicators, and adds no missing personal nodes.
+The persistent legend counts rendered personal Topic IDs versus total assigned
+Topic IDs. Clearing selection removes all marks.
+
+`validate-pages-candidate.py --evidence-root PATH` is the full common acceptance
+entrypoint used by this repository's PR/Pages workflow and Hyperskill's project
+PR workflow. It builds all routes, checks the supplement, executes browser tests
+in Chromium/WebKit (desktop/390px), and writes `test-results/pages-candidate.json`
+plus screenshots under `test-results/scope/`. It never uploads or deploys Pages.
+`--install-browsers` installs the existing locked test browsers when needed.
+
+Daily 05:23 UTC and manual checks remain enabled. The checked Hyperskill revision
+is passed to the build without re-resolving main. `project-sync-report.json` records
+revision, exact completed IDs, new/known Topics, independent verified count and the
+comparison baseline. The final `project-sync-result` artifact records build,
+deploy/skip states and errors. A failed check/build cannot reach Pages deployment;
+the previous public artifact remains served. No additional credentials are used.
+
+Review both companion PRs and merge the MyAtlas contract first, then the Hyperskill
+helper/acceptance PR. No merge or production deployment is part of this review.

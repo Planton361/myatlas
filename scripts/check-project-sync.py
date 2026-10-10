@@ -12,12 +12,21 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--evidence-root', type=Path, required=True)
-    parser.add_argument('--event', choices=('schedule', 'push', 'workflow_dispatch'), required=True)
+    parser.add_argument('--event', choices=('schedule', 'push', 'workflow_dispatch', 'pull_request'), required=True)
     parser.add_argument('--github-output', type=Path)
     args = parser.parse_args()
     # Evidence failures intentionally exit nonzero: never convert rejection to
     # an unchanged result or a new deployment with zero project completions.
-    result = decide(ROOT, args.evidence_root, args.event)
+    try:
+        result = decide(ROOT, args.evidence_root, args.event)
+    except Exception as error:
+        result = dict(build=False, build_status='blocked', deploy_status='blocked', error=str(error))
+        Path('project-sync-report.json').write_text(json.dumps(result, indent=2)+'\n')
+        if os.environ.get('GITHUB_STEP_SUMMARY'):
+            with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+                output.write('Project sync blocked: ' + str(error) + '\n')
+        raise
+    Path('project-sync-report.json').write_text(json.dumps(result, indent=2)+'\n')
     if os.environ.get('GITHUB_SHA', result['application_commit']) != result['application_commit']:
         raise ValueError('Check does not match workflow application revision')
     print(json.dumps(result, sort_keys=True, indent=2))
@@ -31,6 +40,7 @@ def main():
             output.write('### Daily project evidence check\n\n' + result['reason'] + '\n\n')
             output.write('- MyAtlas revision: `' + result['application_commit'] + '`\n')
             output.write('- Project-source revision: `' + result['project_commit'] + '`\n')
+            output.write('\n```json\n' + json.dumps(result, indent=2) + '\n```\n')
     return 0
 
 

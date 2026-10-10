@@ -3,6 +3,7 @@ on:
   push:
     branches: [main, 'release/**']
     paths-ignore: ['progress/leetcode/**']
+  pull_request:
   workflow_dispatch:
   schedule:
     - cron: "23 5 * * *" # Daily 05:23 UTC, default branch only.
@@ -18,6 +19,7 @@ jobs:
       contents: read
     outputs:
       build: ${{ steps.decision.outputs.build }}
+      project_commit: ${{ steps.decision.outputs.project_commit }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,6 +46,11 @@ jobs:
         env:
           WORKFLOW_EVENT: ${{ github.event_name }}
         run: python3 -B scripts/check-project-sync.py --evidence-root build/evidence/hyperskill-projects --event "$WORKFLOW_EVENT" --github-output "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: project-sync-decision
+          path: project-sync-report.json
   build:
     needs: project-check
     if: needs.project-check.outputs.build == 'true'
@@ -58,7 +65,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Planton361/hyperskill-projects
-          ref: main
+          ref: ${{ needs.project-check.outputs.project_commit }}
           path: build/evidence/hyperskill-projects
           fetch-depth: 0
           persist-credentials: false
@@ -68,72 +75,38 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate committed edition and completion evidence
-        run: |
-          python3 -B scripts/check-myatlas-production.py
-          python3 -B -m unittest scripts.tests.test_course_completion scripts.tests.test_git_project_completion scripts.tests.test_myatlas_release scripts.tests.test_myatlas_navigation scripts.tests.test_external_completion
-          for test in progress-analytics universal-progress completion portfolio copy geometry-measurements; do node "tests/myatlas/$test.cjs"; done
-      - name: Validate rights-safe LeetCode summary sources
-        run: |
-          python3 -B -m unittest scripts.tests.test_leetcode_progress scripts.tests.test_leetcode_cpu
-          node --test tests/leetcode-progress/loader.cjs
-      - name: Validate owner publisher without real GitHub writes
-        run: node --test tools/chrome-tracker/tests/core.cjs tools/chrome-tracker/tests/worker.cjs tools/chrome-tracker/tests/package.cjs tools/chrome-tracker/tests/public-sync.cjs
       - name: Generate public evidence and readable differential summary
         run: |
           python3 -B scripts/sync-hyperskill-projects.py --evidence-root build/evidence/hyperskill-projects > "$RUNNER_TEMP/progress-review.json"
           python3 -B scripts/sync-project-completion.py --summary < "$RUNNER_TEMP/progress-review.json" >> "$GITHUB_STEP_SUMMARY"
-      - name: Build the Pages artifact from committed sources
-        run: |
-          python3 -B scripts/build-myatlas.py
-          python3 -B scripts/check-myatlas-production.py --site build/pages/knowledge-map --current-head
-          cp docs/.nojekyll build/pages/.nojekyll
-      - name: Apply and validate the approved persistent navigation link
-        run: |
-          python3 -B scripts/build-myatlas-navigation.py
-          python3 -B scripts/build-myatlas-navigation.py --check
-      - name: Bind progress to canonical Hyperskill project exports
-        run: |
-          python3 -B scripts/build-myatlas-external.py --evidence-root build/evidence/hyperskill-projects
-          python3 -B scripts/build-myatlas-external.py --check --evidence-root build/evidence/hyperskill-projects
-      - name: Package the sibling LeetCode progress route
-        run: python3 -B scripts/build-leetcode-progress.py
-      - name: Package the owner-approved CPU Atlas sibling route
-        run: python3 -B scripts/build-leetcode-atlas.py
-      - name: Install locked focused browser tooling
+      - name: Install locked browser dependencies
         run: |
           npm ci --prefix scripts/knowledge_atlas --ignore-scripts
           scripts/knowledge_atlas/node_modules/.bin/playwright install --with-deps chromium webkit
-      - name: Validate the actual repository base path
+      - name: Full isolated Pages and browser acceptance (no deployment)
+        run: python3 -B scripts/validate-pages-candidate.py --evidence-root build/evidence/hyperskill-projects
+      - name: Validate main context with anonymous live public progress (no deployment)
+        if: github.event_name == 'pull_request'
         env:
-          HYPERSKILL_EVIDENCE_ROOT: build/evidence/hyperskill-projects
-          MYATLAS_PRE_RELEASE_PROGRESS: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
+          MYATLAS_PRE_RELEASE_PROGRESS: '1' # The entrypoint must override inherited fixture mode.
         run: |
-          mkdir -p build/preview
-          ln -s ../pages build/preview/myatlas
-          python3 -B -m http.server 8807 --bind 127.0.0.1 --directory build/preview > "$RUNNER_TEMP/preview.log" 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid"' EXIT
-          for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:8807/myatlas/knowledge-map/ > /dev/null; then break; fi
-            sleep 1
-          done
-          node tests/myatlas/release.cjs
-          node tests/myatlas/navigation.cjs
-          node tests/myatlas/geometry-browser.cjs
-          node tests/leetcode-progress/browser.cjs
-          node tests/leetcode-atlas/progress.cjs test-results/leetcode-cpu
-          node tests/leetcode-atlas/top-ui.cjs test-results/leetcode-cpu after
-          git diff --exit-code -- docs/knowledge-map state/knowledge-atlas data/knowledge src/myatlas
+          cp test-results/pages-candidate.json test-results/pages-candidate-pr.json
+          GITHUB_REF=refs/heads/main python3 -B scripts/validate-pages-candidate.py --evidence-root build/evidence/hyperskill-projects
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('test-results/pages-candidate.json').read_text())
+          assert report['github_ref'] == 'refs/heads/main', report
+          assert report['public_progress_mode'] == 'anonymous-live', report
+          PY
+      - name: Preserve committed evidence and frozen sources
+        run: git diff --exit-code -- docs/knowledge-map state/knowledge-atlas data/knowledge src/myatlas
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: myatlas-review-${{ github.sha }}
           path: |
-            test-results/v66-release.json
-            test-results/v66-geometry.json
-            test-results/myatlas-navigation.json
-            test-results/leetcode-progress.json
-            test-results/leetcode-cpu/*.json
+            test-results/
             build/leetcode-cpu-manifest.json
             ${{ runner.temp }}/progress-review.json
       - uses: actions/upload-pages-artifact@v3
@@ -161,3 +134,41 @@ jobs:
       - name: Deploy validated artifact
         id: deployment
         uses: actions/deploy-pages@v4
+  sync-report:
+    if: always()
+    needs: [project-check, build, deploy]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: project-sync-decision
+          path: report
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: myatlas-review-${{ github.sha }}
+          path: build-review
+      - name: Summarize checked revision and terminal job states
+        env:
+          CHECK_STATUS: ${{ needs.project-check.result }}
+          BUILD_STATUS: ${{ needs.build.result }}
+          DEPLOY_STATUS: ${{ needs.deploy.result }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 - <<'PYREPORT'
+          import json, os
+          from pathlib import Path
+          path = Path('report/project-sync-report.json')
+          value = json.loads(path.read_text()) if path.exists() else {'error': 'Evidence check did not produce a report; inspect check job logs'}
+          value.update(check_status=os.environ['CHECK_STATUS'], build_status=os.environ['BUILD_STATUS'], deploy_status=os.environ['DEPLOY_STATUS'], run_url=os.environ['RUN_URL'])
+          if value['build_status'] == 'failure':
+              reports = list(Path('build-review').rglob('pages-candidate.json'))
+              value['error'] = json.loads(reports[0].read_text()).get('error') if reports else 'Build failed before Pages acceptance; inspect validation step in run_url'
+          Path('sync-report.json').write_text(json.dumps(value, indent=2)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out: out.write('### Project sync result\n\n```json\n'+json.dumps(value, indent=2)+'\n```\n')
+          PYREPORT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-sync-result
+          path: sync-report.json

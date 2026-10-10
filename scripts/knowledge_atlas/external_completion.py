@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 from .git_completion import committed_inputs, git
-from .project_completion import scan
+from .external_export_scan import scan
 
 REPOSITORY = 'Planton361/hyperskill-projects'
 
@@ -23,7 +23,14 @@ def external_inputs(root, evidence_root, ref='HEAD'):
             continue
         meta, name = item.split(b'\t', 1)
         entries[name.decode()] = meta.decode().split()
-    manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.startswith('java/') and n.endswith('/.hyperskill-import.json'))
+    manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.endswith('/.hyperskill-import.json'))
+    if any(n.split('/')[0] not in ('java','python') for n in manifests):
+        raise ValueError('Unsupported canonical export language')
+    for name in entries:
+        if len(name.split('/')) >= 3 and name.split('/')[0] in ('java','python') and '/'.join(name.split('/')[:2])+'/.hyperskill-import.json' not in manifests:
+            raise ValueError('Canonical project directory missing export manifest: ' + name)
+    if not manifests:
+        raise ValueError("No canonical project exports found; preserve previous deployment")
     refs = []
     with tempfile.TemporaryDirectory(prefix='myatlas-public-evidence-') as folder:
         for manifest in manifests:
@@ -39,7 +46,7 @@ def external_inputs(root, evidence_root, ref='HEAD'):
                 refs.append(dict(repository=REPOSITORY, commit=commit, path=name, git_blob=oid, sha256=hashlib.sha256(raw).hexdigest()))
         completion = scan(Path(folder), inputs['scopes'])
     if completion['rejected']:
-        raise ValueError('Rejected public exports; keep the previous deployment')
+        raise ValueError('Rejected public exports; keep the previous deployment: ' + json.dumps(completion['rejected'], sort_keys=True))
     completion['course_completion'] = inputs['completion']['course_completion']
     inputs['completion'] = completion
     inputs['source']['evidence'].extend(refs)
@@ -56,7 +63,7 @@ def project_external(root, evidence_root, ref='HEAD'):
              'scripts/knowledge_atlas/project_completion.py', 'scripts/knowledge_atlas/course_completion.py',
              'scripts/knowledge_atlas/completion_projection.cjs',
              'src/myatlas/knowledge-atlas-v6-skill-tree/progress-analytics.js',
-             'scripts/knowledge_atlas/external_completion.py', 'scripts/sync-hyperskill-projects.py',
+             'scripts/knowledge_atlas/external_completion.py', 'scripts/knowledge_atlas/external_export_scan.py', 'scripts/sync-hyperskill-projects.py',
              'scripts/build-myatlas-external.py', 'scripts/knowledge_atlas/external_release.py']
     inputs['source']['implementation_sha256'] = {}
     for name in names:

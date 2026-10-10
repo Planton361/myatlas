@@ -62,25 +62,43 @@ def deployed_revisions(read=public_read):
 
 
 def decide(root, evidence_root, event, read=public_read):
-    if event not in ('schedule', 'push', 'workflow_dispatch'):
+    if event not in ('schedule', 'push', 'workflow_dispatch', 'pull_request'):
         raise ValueError('Unsupported workflow event')
     # This is the existing exact committed evidence scanner/projection, not a
     # new inference engine. Rejections propagate and block the pipeline.
-    projection = project_external(root, evidence_root)['projection']
+    review = project_external(root, evidence_root)
+    projection = review['projection']
     source = projection['source']
     app, project = source['commit'], source['project_commit']
     result = dict(build=True, application_commit=app, project_commit=project,
-                  reason='Push/manual run uses the full validated build')
+                  reason='Push/manual run uses the full validated build',
+                  completed_project_ids=projection['completed_project_ids'],
+                  newly_learned_topic_ids=review['changes']['newly_learned_topic_ids'],
+                  already_known_topic_ids=review['changes']['already_learned_topic_ids'],
+                  comparison_baseline=review['changes']['baseline'],
+                  verified_topic_count=projection['global']['verified'],
+                  build_status='pending', deploy_status='pending', error=None)
     if event != 'schedule':
         return result
     try:
-        deployed_app, deployed_project = deployed_revisions(read)
+        captured = {}
+        def capture(name):
+            captured[name] = read(name)
+            return captured[name]
+        deployed_app, deployed_project = deployed_revisions(capture)
         current_main = latest_main()
     except (OSError, ValueError, TypeError, KeyError, AttributeError, subprocess.SubprocessError):
         result['reason'] = 'Deployed comparison unavailable or invalid; full validated build required'
         return result
+    # The deployed bytes have already been bound to their runtime manifest.
+    deployed = json.loads(captured['progress.json'])
+    if isinstance(deployed.get('effective_learned_topic_ids'), list):
+        previous = set(deployed['effective_learned_topic_ids'])
+        result.update(newly_learned_topic_ids=sorted(set(projection['effective_learned_topic_ids'])-previous),
+                      already_known_topic_ids=sorted(set(projection['project_learned_topic_ids'])&previous),
+                      comparison_baseline='validated_deployed_projection')
     unchanged = deployed_app == app == current_main and deployed_project == project
-    result.update(build=not unchanged,
+    result.update(build_status='skipped' if unchanged else 'pending', deploy_status='skipped' if unchanged else 'pending', build=not unchanged,
                   reason='Both deployed revisions conclusively unchanged' if unchanged else
                   'Application or project evidence revision changed; full validated build required')
     return result

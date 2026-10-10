@@ -1,0 +1,51 @@
+{
+  "base_manifest_fingerprint": "70b97e99f104ed85af7d49bba6f6b3af66cc826164caa6e93fb31d4ffc13e3b5",
+  "edits": {
+    "views/knowledge-atlas-scope-pyramid/layout.js": {
+      "after": "a24b931122758e5682f3114f0e84297dcf6dc8d12a2b672d6fa74097ca8f3f4b",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-scope-pyramid/layout.js",
+      "before": "efddc623e3f92ab57a24538444270b931dc3c9e62f904488d1715b44b43321f9",
+      "new": "n.leafKeys.filter(k=>[\"topic:9\",\"topic:14\",\"topic:15\",\"topic:25\",\"topic:27\",\"topic:30\",\"topic:31\",\"topic:32\",\"topic:36\",\"topic:87\",\"topic:88\",\"topic:89\",\"topic:112\",\"topic:113\",\"topic:146\",\"topic:147\",\"topic:148\",\"topic:152\",\"topic:161\",\"topic:193\",\"topic:259\",\"topic:260\",\"topic:307\",\"topic:308\",\"topic:309\",\"topic:348\",\"topic:571\",\"topic:1248\",\"topic:1476\",\"topic:1761\",\"topic:3538\"].includes(k)).length",
+      "old": "n.leafKeys.filter(k=>m.nodes.get(k).is_learned).length",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-v6-global/layout.js": {
+      "after": "f048aba2064292a5e9ff5d44ddd5f9bed892c391555e77689753aae7d089fe84",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-global/layout.js",
+      "before": "79456f637ceb1cd05cedf45904ca13307ede1aa4889dadcdb8ca7b4f0caefe14",
+      "new": "n.leafKeys.filter(k=>[\"topic:9\",\"topic:14\",\"topic:15\",\"topic:25\",\"topic:27\",\"topic:30\",\"topic:31\",\"topic:32\",\"topic:36\",\"topic:87\",\"topic:88\",\"topic:89\",\"topic:112\",\"topic:113\",\"topic:146\",\"topic:147\",\"topic:148\",\"topic:152\",\"topic:161\",\"topic:193\",\"topic:259\",\"topic:260\",\"topic:307\",\"topic:308\",\"topic:309\",\"topic:348\",\"topic:571\",\"topic:1248\",\"topic:1476\",\"topic:1761\",\"topic:3538\"].includes(k)).length",
+      "old": "n.leafKeys.filter(k=>m.nodes.get(k).is_learned).length",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-v6-skill-tree/index.html": {
+      "after": "36ec73f307df05d6670d0ea6fdd2cf6da8e50bb46599702845ed730101837be8",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/index.html",
+      "before": "b5516bd4dc24a6d844b9b6fad980b9f46a8c176fa203b823c80694f7584b0be4",
+      "new": "<script src=\"../knowledge-atlas-scope-pyramid/ux-model.js\"></script><script src=\"progress-ui.js\"></script>",
+      "old": "<script src=\"progress-ui.js\"></script>",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-v6-skill-tree/progress-ui.js": {
+      "after": "66fc520f46aaf2ea9c0f0aed8749935b8374149ffe6be8d0ffc65df0606e322f",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/progress-ui.js",
+      "before": "93891bbd2eebc8fb09576569ac3e45ae999aa27cb85469ae476283b83947ea30",
+      "operation": "replace",
+      "source": "src/supplements/progress-scope-v1/progress-ui.js"
+    },
+    "views/knowledge-atlas-v6-skill-tree/progress.css": {
+      "after": "d7ab9a9ef1c672b01bd334b2b4393584db35eff9e40910928b7cdf86a6084ea3",
+      "baseline_source": "docs/knowledge-map/views/knowledge-atlas-v6-skill-tree/progress.css",
+      "before": "9171e901070bebb0729bfe7f19b44e3726495fe09e220c1ae7175e6491df6f3d",
+      "operation": "append",
+      "source": "src/supplements/progress-scope-v1/scope.css"
+    }
+  },
+  "measurement_policy": "Category counter measurement uses the immutable accepted Topic-ID snapshot only. Displayed learning/verification still comes from the current validated projection. No coordinate, packing, or layout constants change.",
+  "schema": 1,
+  "sources": {
+    "docs/knowledge-map/progress.json": "a6da143c5eae639870c31bfa8d86ebe2f3b73e46486ba63cb9398bfa24016de8",
+    "src/supplements/progress-scope-v1/progress-ui.js": "66fc520f46aaf2ea9c0f0aed8749935b8374149ffe6be8d0ffc65df0606e322f",
+    "src/supplements/progress-scope-v1/scope.css": "78e4a649f0b6d0414d83c943cd1689cb773d6e6335169e34c86536f7939cebbc"
+  },
+  "version": "progress-scope-v1"
+}
