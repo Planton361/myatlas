@@ -88,11 +88,17 @@ jobs:
       - name: Validate main context with anonymous live public progress (no deployment)
         if: github.event_name == 'pull_request'
         env:
-          GITHUB_REF: refs/heads/main
           MYATLAS_PRE_RELEASE_PROGRESS: '1' # The entrypoint must override inherited fixture mode.
         run: |
           cp test-results/pages-candidate.json test-results/pages-candidate-pr.json
-          python3 -B scripts/validate-pages-candidate.py --evidence-root build/evidence/hyperskill-projects
+          GITHUB_REF=refs/heads/main python3 -B scripts/validate-pages-candidate.py --evidence-root build/evidence/hyperskill-projects
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('test-results/pages-candidate.json').read_text())
+          assert report['github_ref'] == 'refs/heads/main', report
+          assert report['public_progress_mode'] == 'anonymous-live', report
+          PY
       - name: Preserve committed evidence and frozen sources
         run: git diff --exit-code -- docs/knowledge-map state/knowledge-atlas data/knowledge src/myatlas
       - uses: actions/upload-artifact@v4
