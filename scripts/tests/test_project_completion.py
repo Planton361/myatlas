@@ -6,6 +6,7 @@ import tempfile
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from knowledge_atlas.project_completion import scan, validate_completion
+from knowledge_atlas.external_export_scan import scan as scan_external
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -47,3 +48,41 @@ class CompletionTests(unittest.TestCase):
     def test_attestation_validation(self):
         for value in ({},dict(project_id=1,status='active',attested_by='owner',observed_at='2026-10-08T12:00:00Z'),dict(project_id=1,status='completed',attested_by='owner',observed_at='yesterday')):
             with self.assertRaises(ValueError):validate_completion(value)
+
+    def test_source_only_export_completes_unknown_project_without_inventing_topics(self):
+        scopes = json.loads((ROOT/'src/myatlas/knowledge-atlas-scope-pyramid/scope-index.json').read_text())
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            folder = root/'java'/'Zookeeper with Java'
+            source = folder/'src/main/java/Main.java'
+            source.parent.mkdir(parents=True)
+            source.write_text('// Project topic 999999 is only source text, not Atlas evidence.\nclass Main {}\n')
+            readme = '# Zookeeper with Java\n\nhttps://hyperskill.org/projects/229\n'
+            (folder/'README.md').write_text(readme)
+            raw = source.read_bytes()
+            manifest = {
+                'schema': 3,
+                'mode': 'source-only',
+                'language': 'java',
+                'directory_name': folder.name,
+                'project_id': 229,
+                'completion': dict(project_id=229, status='completed', attested_by='owner', observed_at='2026-10-10T11:45:17Z'),
+                'files': {'src/main/java/Main.java': hashlib.sha256(raw).hexdigest()},
+            }
+            (folder/'.hyperskill-import.json').write_text(json.dumps(manifest))
+            result = scan_external(root, scopes)
+            self.assertEqual(result['rejected'], [])
+            project = next(row for row in result['projects'] if row['project_id'] == 229)
+            self.assertEqual(project['status'], 'completed')
+            self.assertEqual(project['observed_at'], '2026-10-10T11:45:17Z')
+            self.assertEqual(project['requirements_state'], 'UNKNOWN')
+            self.assertEqual(project['topic_ids'], [])
+            self.assertNotIn(999999, result['learned_topic_ids'])
+
+            # The archive inventory is exact; neither an unmanifested file nor
+            # a manifest hash that no longer matches can be accepted.
+            (folder/'.env').write_text('private=not-for-export')
+            self.assertEqual(len(scan_external(root, scopes)['rejected']), 1)
+            (folder/'.env').unlink()
+            source.write_text(source.read_text()+'// tampered\n')
+            self.assertEqual(len(scan_external(root, scopes)['rejected']), 1)
