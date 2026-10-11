@@ -43,6 +43,10 @@ g.HyperskillView={subscribe(fn){callbacks.add(fn);if(current){fn(current);publis
     r.entityIds=Object.freeze(r.scene.entities.filter(e=>e.type!=='context').map(e=>e.key));
     r.commandIds=Object.freeze([...r.scene.commands,...r.scene.inks].map(c=>c.id));
     r.paths=new Map(r.scene.inks.filter(c=>c.d||['outline','tray','progress-row'].includes(c.kind)).map(c=>{const path=c.d?new Path2D(c.d):new Path2D();if(!c.d)g.AtlasTilePaint.rounded(path,c.x,c.y,c.w,c.h,c.r);return[c.id,path];}));
+    // This worker is intentionally retired. WebKit can report an aborted
+    // script load while it is being terminated; never let its late error touch
+    // the replacement worker. The new worker retains the frozen error handler.
+    if(r.worker)r.worker.onerror=event=>event.preventDefault();
     r.invalidateStyles();
    }
    g.AtlasV6.draw();if(s.selected)g.AtlasV6.select(s.selected,false);

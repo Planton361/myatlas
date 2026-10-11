@@ -35,6 +35,7 @@ try{
   while(panel.children.length>1)panel.lastElementChild.remove();panel.append(fragment);
  }
  reader=HyperskillIndex.create({fallback:projection.fallback,derive:projection.snapshot,storage,onChange:state=>{for(const fn of listeners)fn(state);render(state);}});
+ window.addEventListener('pagehide',()=>reader.cancel(),{once:true});
  render(reader.state());resolveReady(true);await reader.restore();await reader.refresh();
  let last=Date.now();const refresh=()=>{if(document.visibilityState==='visible'&&Date.now()-last>=60000){last=Date.now();reader.refresh();}};
  document.addEventListener('visibilitychange',refresh);setInterval(refresh,300000);
