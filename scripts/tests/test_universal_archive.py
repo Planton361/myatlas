@@ -277,10 +277,23 @@ class UniversalArchiveTests(unittest.TestCase):
 
     def test_parent_symlink_is_rejected_before_opening_code(self):
         d,_=self.archive()
-        (d/'solution').rename(d/'original-solution')
-        (d/'solution').symlink_to('original-solution',target_is_directory=True)
-        self.assertRegex(scan(self.repo,SCOPES)['rejected'][0]['reason'],'Symlink')
-        self.reject('Non-regular committed export')
+        # Isolate the symlink violation from forbidden archive directories so
+        # rejection does not depend on filesystem traversal order.
+        with tempfile.TemporaryDirectory(prefix='myatlas-symlink-target-') as folder:
+            target=Path(folder)/'original-solution'
+            (d/'solution').rename(target)
+            (d/'solution').symlink_to(target,target_is_directory=True)
+            self.assertRegex(scan(self.repo,SCOPES)['rejected'][0]['reason'],'Symlink')
+            self.reject('Non-regular committed export')
+
+    def test_unexpected_archive_directory_is_rejected(self):
+        d,_=self.archive()
+        unexpected=d/'original-solution'
+        unexpected.mkdir()
+        (unexpected/'Main.java').write_bytes(b'unlisted solution')
+        self.assertRegex(scan(self.repo,SCOPES)['rejected'][0]['reason'],
+                         'Universal members must stay below solution/')
+        self.reject('Universal members must stay below solution/')
 
     def test_case_aliases_empty_inventory_and_invalid_readme_inventory(self):
         d,original=self.archive()
