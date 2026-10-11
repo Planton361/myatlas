@@ -103,7 +103,7 @@ async function run(engine,name,options){
    assert.deepEqual(await page.locator('#application-nav a').allTextContents(),['Atlas','My Skill Tree','LeetCode']);
    assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.verified),progress.global.verified);
   }
-  assert.deepEqual(errors,[]);results.rows.push({browser:name,version:browser.version(),width,geometry,initial,checks,anonymousPublicRequests:requests.length});await context.close();
+  assert.deepEqual(errors,[],`${name} ${width}px: unexpected browser error during top UI acceptance`);results.rows.push({browser:name,version:browser.version(),width,geometry,initial,checks,anonymousPublicRequests:requests.length});await context.close();
  }}finally{await browser.close();}
 }
 (async()=>{fs.mkdirSync(workspace,{recursive:true});await run(chromium,process.env.CPU_CHROME==='1'?'chrome':'chromium',process.env.CPU_CHROME==='1'?{channel:'chrome'}:{});if(phase==='after')await run(webkit,'webkit',{});results.status='PASS';fs.writeFileSync(path.join(workspace,`top-ui-${phase}.json`),JSON.stringify(results,null,2)+'\n');console.log(JSON.stringify({status:results.status,phase,rows:results.rows.map(r=>({browser:r.browser,width:r.width,collisions:r.initial.collisions.length,checks:r.checks.length,canvasHeight:r.initial.canvas.height}))},null,2));})().catch(e=>{console.error(e);process.exit(1);});

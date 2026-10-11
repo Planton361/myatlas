@@ -2,6 +2,7 @@
 import importlib.util
 import json
 import os
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -52,6 +53,26 @@ class PagesCandidateContextTests(unittest.TestCase):
                 env, report = self.invoke(environment)
                 self.assertEqual(env['MYATLAS_PRE_RELEASE_PROGRESS'], '1')
                 self.assertEqual(report['deployment'], 'disabled')
+
+
+class TopUiRetryTests(unittest.TestCase):
+    def test_initial_success_does_not_retry(self):
+        with patch.object(candidate, 'run') as child:
+            candidate.run_top_ui(ROOT, ['node', 'top-ui.cjs'], {})
+        self.assertEqual(child.call_count, 1)
+
+    def test_transient_failure_requires_a_complete_second_pass(self):
+        failure = subprocess.CalledProcessError(1, ['node', 'top-ui.cjs'])
+        with patch.object(candidate, 'run', side_effect=[failure, None]) as child:
+            candidate.run_top_ui(ROOT, ['node', 'top-ui.cjs'], {})
+        self.assertEqual(child.call_count, 2)
+
+    def test_repeat_failure_blocks_deployment(self):
+        failure = subprocess.CalledProcessError(1, ['node', 'top-ui.cjs'])
+        with patch.object(candidate, 'run', side_effect=[failure, failure]) as child:
+            with self.assertRaises(subprocess.CalledProcessError):
+                candidate.run_top_ui(ROOT, ['node', 'top-ui.cjs'], {})
+        self.assertEqual(child.call_count, 2)
 
 
 if __name__ == '__main__':
