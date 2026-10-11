@@ -264,6 +264,8 @@ class UniversalArchiveTests(unittest.TestCase):
         self.assertEqual(actual['verified_topic_ids'],baseline['verified_topic_ids'])
         self.assertNotIn('completion_register',actual)
         self.assertEqual(json.loads((ROOT/'docs/releases/myatlas-v6.6.json').read_text())['geometry'],baseline['geometry'])
+        (self.repo/'java/Simple Chat Bot with Java/src/main/java/unlisted.java').write_text('unlisted code')
+        self.reject('Legacy inventory')
 
     def test_source_only_python_still_accepts(self):
         d=self.repo/'python/Disposable Python';(d/'src').mkdir(parents=True)
@@ -307,6 +309,28 @@ class UniversalArchiveTests(unittest.TestCase):
                 else:r['projects'].append(copy.deepcopy(r['projects'][0]))
                 result=subprocess.run(['node',str(runner)],input=json.dumps(inputs).encode(),capture_output=True)
                 self.assertNotEqual(result.returncode,0)
+
+    def test_schema1_baseline_deduplicates_registered_old_project(self):
+        self.archive(113);self.archive(UNMAPPED)
+        result=self.projection()
+        self.assertNotIn(113,result['changes']['newly_registered_project_ids'])
+        self.assertEqual(result['projection']['completion_register']['completed_project_count'],2)
+
+    def test_unknown_archive_root_and_noncanonical_directory_are_rejected(self):
+        d,m=self.archive()
+        moved=self.repo/'rust/Example';moved.parent.mkdir();d.rename(moved)
+        self.reject('Unsupported canonical archive root')
+        moved.rename(self.repo/'projects'/('0'+str(UNMAPPED)))
+        self.reject('canonical projects')
+
+    def test_no_solution_role_is_not_a_code_archive(self):
+        d,m=self.archive()
+        m['files']['solution/Main.java']['role']='resource';self.manifest(d,m)
+        self.reject('explicitly selected solution')
+
+    def test_hash_valid_inventory_with_private_path_is_rejected(self):
+        self.archive(files={'solution/credentials.txt':(b'own code','solution')})
+        self.reject('Unsafe/private')
 
 
 if __name__ == '__main__':

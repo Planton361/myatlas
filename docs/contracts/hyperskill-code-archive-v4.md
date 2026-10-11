@@ -2,7 +2,8 @@
 
 Status: Phase 1 reader contract. No publisher, dynamic loader or production index
 is introduced here. Schema 2 and source-only schema 3 remain valid at their
-existing paths; none of their bytes are migrated. See the immutable intake
+existing paths; full inventories are checked against their original metadata
+exceptions (README and manifest are not legacy inventory members); none of their bytes are migrated. See the immutable intake
 [baseline](hyperskill-baseline-v1.json) and [Phase 2 handoff](hyperskill-phase2-handoff.md).
 
 ## Identity and layout

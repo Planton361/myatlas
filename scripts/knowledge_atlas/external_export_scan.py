@@ -72,6 +72,8 @@ def _source_only_files(directory, manifest, language):
         if not isinstance(digest, str) or not HASH.fullmatch(digest):
             raise ValueError('Invalid SHA-256 file inventory entry: ' + name)
         target = directory.joinpath(*member.parts)
+        if any(directory.joinpath(*member.parts[:i]).is_symlink() for i in range(1, len(member.parts) + 1)):
+            raise ValueError('Symlink source-only parent refused')
         if not target.is_file() or target.is_symlink():
             raise ValueError('Missing or unsafe source-only member: ' + name)
         if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
@@ -83,6 +85,8 @@ def _source_only_files(directory, manifest, language):
     for item in directory.rglob('*'):
         if item.is_symlink():
             raise ValueError('Symlink source-only member refused')
+        if not (item.is_file() or item.is_dir()):
+            raise ValueError('Special source-only member refused')
         if item.is_file():
             relative = item.relative_to(directory).as_posix()
             if relative not in ('README.md', '.hyperskill-import.json'):
@@ -116,8 +120,15 @@ def _legacy_files(directory, manifest, language):
             raise ValueError('Symlink manifest member refused')
         if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
             raise ValueError('Export content does not match manifest: ' + name)
+    actual = set()
+    for item in directory.rglob('*'):
+        if item.is_symlink() or not (item.is_file() or item.is_dir()):
+            raise ValueError('Symlink/special legacy archive member refused')
+        if item.is_file():
+            actual.add(item.relative_to(directory).as_posix())
+    if actual != set(manifest['files']) | {'README.md', '.hyperskill-import.json'}:
+        raise ValueError('Legacy inventory must cover every archived file exactly')
     return manifest['files']
-
 
 
 # Schema 4 is selected by explicit identity and roles, never language/extensions.

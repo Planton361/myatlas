@@ -53,6 +53,13 @@
   },
   "schema": 1,
   "semantic_projection_sha256": "1a86243ba9c3581c709417281cd18498bb72b5b0bfc23a91baa6bcffa0086878",
+  "trusted_input_sha256": {
+    "data/myatlas/course-completions.json": "24663af6c6b5e489c9119b203552756babcd026b21dc17aae5ae9e7bf574f0d7",
+    "docs/knowledge-map/progress.json": "a6da143c5eae639870c31bfa8d86ebe2f3b73e46486ba63cb9398bfa24016de8",
+    "src/myatlas/knowledge-atlas-scope-pyramid/catalog.json": "43108621762bcac6a29ece79cf4df71d2ef3a40ca80275c0736beef80862e332",
+    "src/myatlas/knowledge-atlas-scope-pyramid/scope-index.json": "879c7c4565e2ab72092f3fa8ca184cba062ad6faf5245d0a9f33e8b390bd4b09",
+    "src/myatlas/knowledge-atlas-v6-skill-tree/progress-analytics.js": "22af73f3810c17f5736c09be337d1003d73fda55da2d246d6bb637e85fc0e947"
+  },
   "verified_topic_ids": [
     15,
     25,

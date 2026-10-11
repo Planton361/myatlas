@@ -24,7 +24,7 @@ function run(input){
   const changed=canonical(register||null)!==canonical(previous||null);
   result.changes.semantic_change ||= changed;
   result.changes.completion_register=register||null;
-  const oldIds=previous?.completed_project_ids||input.previous?.completed_project_ids||[];
+  const oldIds=previous?.completed_project_ids||input.previous?.completed_project_ids||(input.previous?.projects||[]).map(p=>p.project_id);
   const newIds=register?.completed_project_ids||result.projection.completed_project_ids;
   result.changes.newly_registered_project_ids=newIds.filter(id=>!oldIds.includes(id));
   result.changes.removed_registered_project_ids=oldIds.filter(id=>!newIds.includes(id));
