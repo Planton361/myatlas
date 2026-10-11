@@ -55,6 +55,7 @@ def main():
             'scripts.tests.test_pages_candidate'],env)
         for test in ('progress-analytics','universal-progress','completion','portfolio','copy','geometry-measurements'):
             run(root,['node','tests/myatlas/'+test+'.cjs'],env)
+        run(root,['node','--test','tests/myatlas/index-reader.cjs'],env)
         run(root,['node','--test','tests/leetcode-progress/loader.cjs'],env)
         run(root,['node','--test',*['tools/chrome-tracker/tests/'+n+'.cjs' for n in ('core','worker','package','public-sync')]],env)
         for script in ('check-myatlas-production.py', 'build-myatlas.py'):
@@ -91,6 +92,10 @@ def main():
                 except OSError:time.sleep(.1)
             for name in ('release','navigation','geometry-browser','scope-presentation'):
                 run(root,['node',f'tests/myatlas/{name}.cjs'],env)
+            for check in ([],['--check']):
+                run(root,[sys.executable,'-B','scripts/build-myatlas-dynamic-index.py',*check,'--evidence-root',evidence],env)
+            run(root,[sys.executable,'-B','-m','unittest','scripts.tests.test_dynamic_index_release'],env)
+            run(root,['node','tests/myatlas/index-browser.cjs'],env)
             for script in ('tests/leetcode-progress/browser.cjs','tests/leetcode-atlas/progress.cjs','tests/leetcode-atlas/top-ui.cjs'):
                 command=['node',script,'test-results/leetcode-cpu','after']
                 if script=='tests/leetcode-atlas/top-ui.cjs':
