@@ -24,6 +24,6 @@ jobs:
         run: python3 -B scripts/check-adaptive-production.py
       - name: Focused evidence and presentation contracts
         run: |
-          python3 -B -m unittest scripts.tests.test_course_completion scripts.tests.test_git_project_completion scripts.tests.test_myatlas_release
+          python3 -B -m unittest scripts.tests.test_course_completion scripts.tests.test_git_project_completion scripts.tests.test_myatlas_release scripts.tests.test_universal_archive
           for test in progress-analytics universal-progress completion portfolio copy; do node "tests/myatlas/$test.cjs"; done
           git diff --exit-code -- docs/knowledge-map state/knowledge-atlas data/knowledge src/myatlas

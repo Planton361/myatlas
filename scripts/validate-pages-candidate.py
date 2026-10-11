@@ -50,7 +50,7 @@ def main():
         run(root,[sys.executable,'-B','-m','unittest',
             'scripts.tests.test_course_completion','scripts.tests.test_git_project_completion',
             'scripts.tests.test_myatlas_release','scripts.tests.test_myatlas_navigation',
-            'scripts.tests.test_external_completion','scripts.tests.test_project_sync',
+            'scripts.tests.test_external_completion','scripts.tests.test_universal_archive','scripts.tests.test_project_sync',
             'scripts.tests.test_leetcode_progress','scripts.tests.test_leetcode_cpu',
             'scripts.tests.test_pages_candidate'],env)
         for test in ('progress-analytics','universal-progress','completion','portfolio','copy','geometry-measurements'):
