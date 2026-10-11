@@ -6,6 +6,7 @@ import subprocess
 import re
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 from .external_completion import project_external, REPOSITORY
+from .index_sync import activation_proven, current_index, anonymous_index_read
 
 PUBLIC_BASE = 'https://planton361.github.io/myatlas/knowledge-map/'
 SHA = re.compile(r'[a-f0-9]{40}')
@@ -61,7 +62,13 @@ def deployed_revisions(read=public_read):
     return app, source['commit']
 
 
-def decide(root, evidence_root, event, read=public_read):
+class IndexSyncBlocked(ValueError):
+    def __init__(self, report, error):
+        super().__init__('Dynamic index sync blocked; last-known-good retained: '+str(error))
+        self.report=dict(report,build=False,build_status='blocked',deploy_status='skipped',error=str(self),mode='dynamic')
+
+
+def decide(root, evidence_root, event, read=public_read, index_read=anonymous_index_read):
     if event not in ('schedule', 'push', 'workflow_dispatch', 'pull_request'):
         raise ValueError('Unsupported workflow event')
     # This is the existing exact committed evidence scanner/projection, not a
@@ -77,7 +84,8 @@ def decide(root, evidence_root, event, read=public_read):
                   already_known_topic_ids=review['changes']['already_learned_topic_ids'],
                   comparison_baseline=review['changes']['baseline'],
                   verified_topic_count=projection['global']['verified'],
-                  build_status='pending', deploy_status='pending', error=None)
+                  build_status='pending', deploy_status='pending', error=None, mode='static', change_class='B',
+                  next_step='Full validated static build until production activation is proved')
     if event != 'schedule':
         return result
     try:
@@ -90,6 +98,22 @@ def decide(root, evidence_root, event, read=public_read):
     except (OSError, ValueError, TypeError, KeyError, AttributeError, subprocess.SubprocessError):
         result['reason'] = 'Deployed comparison unavailable or invalid; full validated build required'
         return result
+    # No variable or producer flag can disable static sync. Both the committed
+    # application release and its exact deployed configuration must prove activation.
+    if deployed_app == app == current_main:
+        try:
+            active=activation_proven(root,json.loads(captured['runtime-manifest.json']),read)
+        except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
+            active=False
+        if active:
+            try:
+                index=current_index(root,evidence_root,project,index_read)
+            except Exception as error:
+                raise IndexSyncBlocked(result,error) from error
+            return dict(result,**index,build=False,build_status='skipped',deploy_status='skipped',
+                        mode='dynamic',change_class='A',
+                        reason='Proved deployed dynamic activation and complete canonical index; no application build required',
+                        next_step='Browser refresh reads this validated revision; no Pages dispatch needed')
     # The deployed bytes have already been bound to their runtime manifest.
     deployed = json.loads(captured['progress.json'])
     if isinstance(deployed.get('effective_learned_topic_ids'), list):

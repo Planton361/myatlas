@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: '22'
       - name: Test conservative daily revision decisions
-        run: python3 -B -m unittest scripts.tests.test_project_sync
+        run: python3 -B -m unittest scripts.tests.test_project_sync scripts.tests.test_index_sync
       - name: Validate evidence and compare deployed revisions
         id: decision
         env:

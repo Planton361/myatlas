@@ -20,7 +20,7 @@ def main():
     try:
         result = decide(ROOT, args.evidence_root, args.event)
     except Exception as error:
-        result = dict(build=False, build_status='blocked', deploy_status='blocked', error=str(error))
+        result = getattr(error, 'report', dict(build=False, build_status='blocked', deploy_status='blocked', error=str(error)))
         Path('project-sync-report.json').write_text(json.dumps(result, indent=2)+'\n')
         if os.environ.get('GITHUB_STEP_SUMMARY'):
             with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
