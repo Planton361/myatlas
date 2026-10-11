@@ -3,7 +3,7 @@
 'use strict';
 const callbacks=new Set();let current,originalNext=null,lastSnapshot=null;
 function publish(state){g.PublicProgress={...state.snapshot.completion,source:{...state.snapshot.completion.source,project_commit:state.revision},global:state.snapshot.completion.global,completed_project_count:state.snapshot.register.completed_project_count,completed_project_ids:state.snapshot.register.completed_project_ids};}
-g.HyperskillView={subscribe(fn){callbacks.add(fn);if(current){fn(current);publish(current);}}};
+g.HyperskillView={state:()=>current,subscribe(fn){callbacks.add(fn);if(current){fn(current);publish(current);}}};
 (async()=>{
  if(parent===g||!parent.HyperskillPortfolio||!await parent.HyperskillPortfolio.ready)return;
  let unsubscribe,closed=false;
