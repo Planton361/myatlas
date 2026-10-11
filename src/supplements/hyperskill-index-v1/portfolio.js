@@ -30,7 +30,7 @@ try{
    list.append(li);
   }
   fragment.append(list);
-  const learned=document.createElement('p');learned.dataset.learnedTopics='true';learned.textContent='Learned Topic IDs: '+snapshot.analytics.scopeMaps.project.size+' catalog Projects; '+snapshot.register.projects.flatMap(p=>p.topic_ids).filter((id,i,all)=>all.indexOf(id)===i).sort((a,b)=>a-b).join(', ');fragment.append(learned);
+  const learned=document.createElement('p');learned.dataset.learnedTopics='true';learned.textContent='Learned Topic IDs: '+snapshot.completion.effective_learned_topic_ids.join(', ');fragment.append(learned);
   // All rows and counters are replaced together, after complete validation.
   while(panel.children.length>1)panel.lastElementChild.remove();panel.append(fragment);
  }
