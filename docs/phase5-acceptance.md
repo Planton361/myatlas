@@ -34,9 +34,21 @@ Versuch scheiterte an fehlendem `playwright-core` im kopierten Tooling; mit dem
 passenden locked Paket wurde die volle Abnahme wiederholt. Der erste Projects-
 CI-Lauf zeigte den oben dokumentierten Fixturefehler; die drei betroffenen
 Offline-/Cache-/Cancel-Assertions sind weiterhin unverändert, die Eingaben korrigiert.
+Die vollständige Baselineprojektion wird außerdem explizit an der unveränderlichen
+`archive_commit`-Revision geprüft; die 22 aktuellen Archivhashes bleiben zusätzlich
+Pflicht. Erweiterte Kandidaten behalten exakt die unabhängigen Verifikations-/Course-
+Nachweise. Browser-Fallbackzahlen verwenden das vollständige Universalregister,
+einschließlich UNMAPPED, nicht die kataloggebundene Teilmenge.
 
 Keine Änderung an Katalog, Analytics, Reader-Runtime-Assets, historischen
 Release-Manifesten, Fortschrittsdaten oder Projektarchiven. Keine produktive
 Aktivierung, kein Deployment und kein Merge. Merge-Reihenfolge: #9 vor Projects #13.
 Rollout/Fehlerbehandlung/Phase-6-Übergabe stehen im
 [Datensync-Vertrag](contracts/hyperskill-project-data-ci-v1.md).
+
+Die sechs Dynamic-Release-Tests bestehen mit frisch an die aktuelle Git-Revision
+gebundenem Artefakt. Der Baseline-Test besteht zusätzlich nach drei aufeinanderfolgenden
+temporären Erweiterungen (UNKNOWN 95, UNMAPPED 900000001, KNOWN 203).
+Eine Prüfung gegen ein Artefakt älterer App-/Projekt-SHAs wurde erwartungsgemäß durch
+`Public project progress mismatch` blockiert; nach Rebuild derselben geprüften
+Revision sind auch Reversal und Geometrie-Manipulationsprüfung grün.

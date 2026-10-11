@@ -5,6 +5,7 @@ const s=require('./index-test-support.cjs'),pairs=s.fixtures();
 const {chromium,webkit}=require(path.join(s.root,'scripts/knowledge_atlas/node_modules/playwright'));
 const base=process.env.ATLAS_PREVIEW||'http://127.0.0.1:8807/myatlas/knowledge-map/';
 const fingerprints=JSON.parse(fs.readFileSync(path.join(s.root,'docs/contracts/hyperskill-baseline-v1.json'))).geometry;
+const fallbackRegister=s.candidate.completion_register||s.candidate;
 const rows=[],baselineAnalytics=require('../../src/myatlas/knowledge-atlas-v6-skill-tree/progress-analytics.js').create({catalog:s.catalog,scopes:s.scopes,completion:s.baseline});
 const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
 (async()=>{for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
@@ -22,7 +23,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   async function go(query=''){phase='go '+query;await page.goto(base+query);await page.waitForFunction(()=>window.AtlasShell?.state().activeFrame?.contentWindow.AtlasV6?.state().L||window.AtlasShell?.state().activeFrame?.contentWindow.ScopeApp?.state().L);await page.waitForFunction(()=>window.HyperskillPortfolio?.state());await viewReady();}
   async function viewReady(){await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow,r=w?.AtlasV6?.state().renderer;return w?.HyperskillView?.state()?.snapshot===HyperskillPortfolio.state()?.snapshot&&(!r?.worker||r.workerReady);});}
   async function geometry(){return page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow,L=(w.AtlasV6||w.ScopeApp).state().L;return JSON.stringify([L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.lines]),L.connectorSegments,L.trays,L.checkpoint]);});}
-  await go('?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state().status==='unavailable');assert.deepEqual((await state()).ids,s.candidate.completed_project_ids);assert.equal((await state()).count,s.candidate.completed_project_count);assert.equal((await state()).learned,s.candidate.global.learned);assert.equal((await state()).verified,12);assert.deepEqual((await state()).course,s.candidate.course_completion);
+  await go('?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state().status==='unavailable');assert.deepEqual((await state()).ids,fallbackRegister.completed_project_ids);assert.equal((await state()).count,fallbackRegister.completed_project_count);assert.equal((await state()).learned,s.candidate.global.learned);assert.equal((await state()).verified,12);assert.deepEqual((await state()).course,s.candidate.course_completion);
   await page.locator('#hyperskill-portfolio summary').click();assert.match(await page.locator('#hyperskill-portfolio').innerText(),/unavailable.*Update unavailable/s);
   const accepted={};
   for(const [name,query]of [['global',''],['personal','?view=skill-tree'],['course8','?course=8'],['project113','?project=113'],['stage617','?project=113&stage=617']]){
