@@ -23,7 +23,9 @@ def validate_completion(value):
     if value['status'] != 'completed' or value['attested_by'] != 'owner':
         raise ValueError('Explicit owner completion attestation required')
     stamp = value['observed_at']
-    if not isinstance(stamp, str) or not re.fullmatch(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ', stamp):
+    # Match the publisher's owner-confirmed UTC contract (whole seconds or up to
+    # six fractional digits). Reject offsets and ambiguous timestamps.
+    if not isinstance(stamp, str) or not re.fullmatch(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?Z', stamp):
         raise ValueError('UTC observation timestamp required')
     try:
         datetime.fromisoformat(stamp.replace('Z', '+00:00'))

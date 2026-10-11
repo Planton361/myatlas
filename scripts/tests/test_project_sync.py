@@ -94,6 +94,32 @@ class ProjectSyncTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'Rejected public exports'):
             project_external(ROOT,self.repo)
 
+
+    def test_fractional_utc_source_only_completion_matches_publisher_contract(self):
+        from scripts.knowledge_atlas.external_export_scan import validate_completion
+        from datetime import datetime
+        folder=self.repo/'java/Fractional UTC Project';source=folder/'src/Main.java'
+        source.parent.mkdir(parents=True)
+        source.write_text('class Main { invalid Java is still evidence; }\n')
+        (folder/'README.md').write_text('# Fractional UTC Project\n\nhttps://hyperskill.org/projects/229\n')
+        timestamp='2026-10-10T11:45:17.123456Z'
+        completion=dict(project_id=229,status='completed',attested_by='owner',observed_at=timestamp)
+        manifest=dict(schema=3,mode='source-only',language='java',directory_name=folder.name,
+                      project_id=229,completion=completion,
+                      files={'src/Main.java':hashlib.sha256(source.read_bytes()).hexdigest()})
+        (folder/'.hyperskill-import.json').write_text(json.dumps(manifest))
+        self.fixture.commit()
+        self.assertEqual(validate_completion(completion),completion)
+        projection=project_external(ROOT,self.repo)['projection']
+        self.assertEqual(projection['completed_project_ids'],[113,229])
+        self.assertEqual(next(row for row in projection['projects'] if row['project_id']==229)['observed_at'],timestamp)
+        self.assertEqual(projection['verified_topic_ids'],self.projection['verified_topic_ids'])
+        self.assertEqual(projection['effective_learned_topic_ids'],self.projection['effective_learned_topic_ids'])
+        for bad in ('2026-10-10T11:45:17.1234567Z','2026-10-10T11:45:17+00:00',
+                    '2026-10-10T11:45Z','2026-14-10T11:45:17Z'):
+            with self.subTest(timestamp=bad),self.assertRaises(ValueError):
+                validate_completion(dict(completion,observed_at=bad))
+
     def test_deployed_partial_or_wrong_projection_is_not_conclusive(self):
         for progress in ([],{'source':{}},{'source':{'commit':self.app,'project_repository':REPOSITORY,'project_commit':'b'*40}}):
             data=dict(self.bytes);raw=json.dumps(progress).encode();manifest=json.loads(data['runtime-manifest.json']);manifest['inventory']['progress.json']=hashlib.sha256(raw).hexdigest();data.update({'progress.json':raw,'runtime-manifest.json':json.dumps(manifest).encode()})
