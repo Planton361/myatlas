@@ -34,6 +34,10 @@ try:
         path,manifest=fixture.universal(pid)
         manifest['title']='<img src=x onerror=alert(1)> Synthetic & "title"'
         manifest['languages']=['java','python','kotlin']
+        for name in ["solution/é(!).future", 'solution/𐀀program']:
+            raw=b'own synthetic UTF-8 code, not executable\n'
+            (path/name).write_bytes(raw)
+            manifest['files'][name]=dict(sha256=index.sha(raw),role='solution')
         (path/'.hyperskill-import.json').write_bytes(index.encode(manifest))
         fixture.commit();pair()
     print(json.dumps(pairs))

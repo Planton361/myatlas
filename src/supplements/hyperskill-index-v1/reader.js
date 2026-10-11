@@ -56,7 +56,7 @@ function payload(value,p){
  fields(value.validator,['version','implementation_revision']);
  require(value.validator.version==='1.0'&&validSHA(value.validator.implementation_revision),'unsupported validator');
  require(Array.isArray(value.projects)&&value.projects.length>0&&value.projects.length<=10000,'invalid project inventory');
- let previous=0,total=0;const archiveRoots=new Set();
+ let previous=0,total=0;const archiveRoots=new Set(),aliases=new Map();
  for(const row of value.projects){
   fields(row,['project_id','project_url','title','archive_schema','archive_path','manifest','completion','files','evidence_id'],['languages']);
   require(id(row.project_id)&&row.project_id>previous,'duplicate/unsorted project ID');previous=row.project_id;
@@ -72,7 +72,7 @@ function payload(value,p){
   const confirmed=timestamp(completion.confirmed_at||completion.observed_at);
   if(Object.hasOwn(completion,'completed_at'))require(timestamp(completion.completed_at)<=confirmed,'completion follows confirmation');
   require(Array.isArray(row.files)&&row.files.length>=3&&row.files.length<=10000&&(total+=row.files.length)<=100000,'invalid file inventory');
-  const files=new Map(),aliases=new Map();let previousPath=null,solutions=0;
+  const files=new Map();let previousPath=null,solutions=0;
   for(const file of row.files){
    fields(file,['path','git_blob','sha256','role'],file.role==='solution'?['code_url']:[]);
    const manifest=file.path===row.archive_path+'/.hyperskill-import.json';

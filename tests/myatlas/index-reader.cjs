@@ -13,6 +13,22 @@ test('complete register replaces static evidence; trusted KNOWN/UNKNOWN/UNMAPPED
  const final=projector.snapshot(JSON.parse(pairs[3].payloadText));assert(final.analytics.global().learned>32);assert.deepEqual(final.register.unmapped_project_ids,[s.unmapped]);
  assert.deepEqual(final.register.projects.find(p=>p.project_id===s.unknown).topic_ids,[]);assert.deepEqual(final.register.projects.find(p=>p.project_id===s.unmapped).topic_ids,[]);
 });
+test('KNOWN_EMPTY, Unicode paths, unknown extensions and extensionless code keep explicit roles',async()=>{
+ const valid=await reader.validate(pairs[4].pointerText,pairs[4].payloadText,crypto),next=projector.snapshot(valid.index);
+ assert.equal(next.register.projects.find(p=>p.project_id===s.empty).requirements_state,'KNOWN_EMPTY');
+ assert.deepEqual(next.register.projects.find(p=>p.project_id===s.empty).topic_ids,[]);
+ const files=valid.index.projects.find(p=>p.project_id===s.unmapped).files;
+ for(const name of ['unknown.future','program','é(!).future','𐀀program'])assert.equal(files.find(f=>f.path.endsWith('/'+name)).role,'solution');
+ assert.equal(files.find(f=>f.path.endsWith('/data.bin')).role,'resource');
+ assert(files.find(f=>f.path.endsWith('/é(!).future')).code_url.includes('%C3%A9%28%21%29.future'));
+ for(const t of s.catalog.topics)assert.equal(next.analytics.topic(t.id).verified,projector.fallback.analytics.topic(t.id).verified);
+ assert.equal(next.register.projects.flatMap(p=>p.topic_ids).includes(999999),false);
+});
+test('structurally valid extra index evidence fully replaces previous project rows, retaining direct observations',()=>{
+ const value=JSON.parse(pairs[0].payloadText);value.projects=value.projects.filter(p=>p.project_id!==380);
+ const next=projector.snapshot(value);assert.equal(next.register.completed_project_count,2);assert.equal(next.analytics.global().verified,12);
+ for(const t of s.catalog.topics)assert.equal(next.analytics.topic(t.id).directlyLearned,projector.fallback.analytics.topic(t.id).directlyLearned);
+});
 const invalidPointer={foreign:q=>{q.repository='other/repo';},extra:q=>{q.cookies=true;},branch:q=>{q.index_url=q.index_url.replace(/\/([a-f0-9]{40})\/portfolio/,'/main/portfolio');},credentials:q=>{q.index_url=q.index_url.replace('https://','https://user:password@');},source:q=>{q.revision='a'.repeat(40);},host:q=>{q.index_url=q.index_url.replace('raw.githubusercontent.com','evil.invalid');},hash:q=>{q.index_sha256='b'.repeat(64);},nonString:q=>{q.revision=[q.revision];}};
 for(const [name,mutate]of Object.entries(invalidPointer))test('reject pointer '+name,async()=>{const q={...p};mutate(q);await assert.rejects(reader.validate(reader.encode(q),pairs[3].payloadText,crypto));});
 const invalidPayload={
@@ -65,4 +81,20 @@ test('timeout and late older responses cannot replace a newer snapshot; cancel i
  const r=reader.create({fallback:projector.fallback,crypto,derive:projector.snapshot,timeout:20,fetcher:async(url,options)=>slow?new Promise(resolve=>{resolveOld=()=>resolve(s.response(url,pairs[0].pointerText));}):s.fetchPair(pairs[3])(url,options)});
  await r.refresh();assert.match(r.state().error,/timeout/);slow=false;await r.refresh();assert.equal(r.state().snapshot.register.completed_project_count,6);resolveOld();await new Promise(resolve=>setTimeout(resolve,30));assert.equal(r.state().snapshot.register.completed_project_count,6);
  let resolve;const pending=reader.create({fallback:projector.fallback,crypto,derive:projector.snapshot,fetcher:async(url,options)=>{if(url===reader.ENDPOINT)await new Promise(r=>{resolve=r;});return s.fetchPair(pairs[3])(url,options);}});const work=pending.refresh();pending.cancel();resolve();await work;assert.equal(pending.state().snapshot.register.completed_project_count,3);
+});
+test('cache restoration cannot overtake a completed newer refresh',async()=>{
+ const store=s.storage(JSON.stringify({schema:1,...pairs[0]}));let release;let first=true;
+ const delayedCrypto={subtle:{digest:async(...args)=>{if(first){first=false;await new Promise(resolve=>{release=resolve;});}return crypto.subtle.digest(...args);}}};
+ const r=reader.create({fallback:projector.fallback,crypto:delayedCrypto,storage:store,derive:projector.snapshot,fetcher:s.fetchPair(pairs[3])});
+ const restoring=r.restore();await new Promise(resolve=>setTimeout(resolve,0));await r.refresh();release();await restoring;
+ assert.equal(r.state().status,'current');assert.equal(r.state().snapshot.register.completed_project_count,6);
+});
+test('case aliases across different archives cannot evade per-file inventory checks',async()=>{
+ const value=JSON.parse(pairs[0].payloadText),row=structuredClone(value.projects[0]),old=row.archive_path;
+ row.project_id=900000002;row.evidence_id='hyperskill:900000002';row.project_url='https://hyperskill.org/projects/900000002';row.completion.project_id=row.project_id;
+ row.archive_path=old.toLowerCase();
+ for(const f of row.files){f.path=f.path.replace(old+'/',row.archive_path+'/');if(f.role==='solution')f.code_url=reader.codeURL(value.revision,f.path);}
+ row.manifest={...row.manifest,path:row.archive_path+'/.hyperskill-import.json'};delete row.manifest.attestation;
+ value.projects.push(row);const pair=await s.rehash(value,JSON.parse(pairs[0].pointerText));
+ await assert.rejects(reader.validate(pair.pointerText,pair.payloadText,crypto),/case alias/);
 });

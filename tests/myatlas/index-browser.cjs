@@ -5,7 +5,7 @@ const s=require('./index-test-support.cjs'),pairs=s.fixtures();
 const {chromium,webkit}=require(path.join(s.root,'scripts/knowledge_atlas/node_modules/playwright'));
 const base=process.env.ATLAS_PREVIEW||'http://127.0.0.1:8807/myatlas/knowledge-map/';
 const fingerprints=JSON.parse(fs.readFileSync(path.join(s.root,'docs/contracts/hyperskill-baseline-v1.json'))).geometry;
-const rows=[];
+const rows=[],baselineAnalytics=require('../../src/myatlas/knowledge-atlas-v6-skill-tree/progress-analytics.js').create({catalog:s.catalog,scopes:s.scopes,completion:s.baseline});
 const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
 (async()=>{for(const [engineName,engine]of [['chromium',chromium],['webkit',webkit]]){
  const browser=await engine.launch({headless:true});try{for(const width of [1440,390]){
@@ -47,7 +47,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   await page.evaluate(()=>AtlasShell.navigate({view:'atlas',project:String(window.HyperskillPortfolio.state().snapshot.portfolio.find(p=>p.archive_schema===4&&p.requirements_state==='KNOWN').project_id)}));
   await page.waitForFunction(()=>AtlasShell.state().activeFrame?.contentWindow.ScopeApp?.state().L&&!AtlasShell.state().activeFrame.contentWindow.ScopeApp.state().busy);
   const mapped=await page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow,s=w.ScopeApp.state();return s.scope.explicit_topic_ids.map(id=>({id,learned:s.ux.topic(id).learned,verified:s.ux.topic(id).verified}));});
-  assert(mapped.length>0);assert(mapped.every(t=>t.learned===true));assert(mapped.every(t=>t.verified===s.baseline.verified_topic_ids.includes(t.id)));
+  assert(mapped.length>0);assert(mapped.every(t=>t.learned===true));assert(mapped.every(t=>t.verified===baselineAnalytics.topic(t.id).verified));
   await page.evaluate(()=>AtlasShell.navigate({view:'skill-tree'}));
   await page.waitForFunction(()=>AtlasShell.state().activeFrame?.contentWindow.SkillProgress);
   assert.equal(await page.locator(`[data-project-id="${s.unmapped}"]`).getAttribute('data-mapping'),'UNMAPPED');
@@ -66,7 +66,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
    await page.goto(base+query);await page.waitForFunction(()=>HyperskillPortfolio.state()?.status==='current');await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow;return w?.AtlasV6?.state().L||w?.ScopeApp?.state().L;});
    assert.equal(await geometry(),accepted[name]);
    if(name==='global'){const flags=await page.evaluate(()=>{const s=AtlasShell.state().activeFrame.contentWindow.AtlasV6.state();return [...s.renderer.byKey.values()].filter(n=>n.type==='topic').map(n=>({id:Number(n.key.split(':')[1]),learned:n.learned,verified:n.verified}));});const learned=new Set(JSON.parse(pair.payloadText).projects.filter(p=>s.scopes.projects.find(r=>r.scope_id===p.project_id)?.state==='KNOWN').flatMap(p=>s.scopes.projects.find(r=>r.scope_id===p.project_id).explicit_topic_ids));assert(flags.filter(t=>learned.has(t.id)).every(t=>t.learned===true));assert(flags.every(t=>Boolean(t.verified)===s.baseline.verified_topic_ids.includes(t.id)));}
-   await page.waitForFunction(expected=>AtlasShell.state().activeFrame.contentWindow.PublicProgress?.completed_project_count===expected,count);
+   try{await page.waitForFunction(expected=>AtlasShell.state().activeFrame.contentWindow.PublicProgress?.completed_project_count===expected,count);}catch(error){console.error({name,state:await state(),frame:await page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow;return {publicCount:w.PublicProgress?.completed_project_count,error:w.document.querySelector('#error')?.textContent,source:w.PublicProgress?.source};}),errors});throw error;}
   }
   await page.goto(base+'?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state()?.status==='current'&&AtlasShell.state().activeFrame?.contentWindow.SkillProgress);
   await page.locator('#hyperskill-portfolio summary').click();await page.screenshot({path:path.join(s.root,`test-results/index-${engineName}-${width}.png`)});
