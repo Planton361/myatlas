@@ -51,9 +51,18 @@ Die bestehenden Cache-, Timeout- und verspätete-Antwort-Regeln bleiben unverän
 
 ## Review und Phase 6
 
-Projects Phase 5 benötigt nur das bereits gemergte MyAtlas Phase 4; keine zyklische
-PR-Abhängigkeit. Empfohlen: Projects-Daten-CI zuerst, MyAtlas-Sync danach. Bestehende
-statische Synchronisierung muss währenddessen grün bleiben.
+Die volle Matrix hat einen Phase-4-Testfixturefehler aufgedeckt: Reader-Unit-
+Fallbacks übernahmen bereits zusätzliche synthetische Kandidatenabschlüsse,
+obwohl der feste Wire-Fixture bei drei Archiven beginnt. Die Testhilfe trennt
+jetzt den festen, weiterhin auf 113/229/380, 32/12 geprüften Reader-Stand von der
+vollständigen Kandidatenprojektion. Browser-Fallbacks müssen exakt zum gebauten
+Kandidaten passen; keine Sicherheits-/Baseline-Assertion entfällt.
+
+Daher **MyAtlas Draft-PR #9 zuerst**, anschließend Projects Draft-PR #13.
+Nur die Projects-PR-Matrix darf den explizit gepinnten MyAtlas-Review-Commit
+verwenden; Main/Health-Läufe verlangen dessen Merge in kanonisches Main.
+Der schnelle Datenvertrag verwendet bereits gemergte Phase-4-Reader-Assets.
+Die bestehende statische Synchronisierung bleibt währenddessen aktiv.
 
 Phase 6 prüft Branchschutz (stabiler `Project acceptance`-Abschlusscheck statt
 unbedingt erforderlicher einzeln übersprungener Browsermatrix), vollständige
