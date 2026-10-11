@@ -11,7 +11,7 @@ from .navigation_release import transform as navigation_transform
 from .presentation_release import transform as presentation_transform, verify_presentation
 
 MANIFEST = 'docs/releases/myatlas-hyperskill-index-v1.json'
-REVIEWED_SHA = '5dd2dc846e121c0c8691b6a84990ee063f65758c6a0a6b10191ecdc1e3f77275'
+REVIEWED_SHA = '715f723ba1bd99e248a3b05b09d76c3dcfb32604205682dfbd7689f012b82a16'
 
 
 def sha(raw):

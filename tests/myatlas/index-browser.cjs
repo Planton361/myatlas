@@ -28,12 +28,13 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   }
   // Switch once to a full valid snapshot, then add four versioned projects in
   // place. No navigation reload, app build or fixture mutation of progress.json.
-  await go('?view=skill-tree');missing=false;await page.evaluate(()=>HyperskillPortfolio.refresh());
+  await go('?view=skill-tree');await page.locator('#hyperskill-portfolio summary').click();missing=false;await page.evaluate(()=>HyperskillPortfolio.refresh());
   assert.equal((await state()).status,'current');const original=await geometry();
   for(let i=1;i<pairs.length;i++){
    pair=pairs[i];await page.evaluate(()=>HyperskillPortfolio.refresh());
    const now=await state();assert.equal(now.count,3+i);assert.equal(now.verified,12);assert.deepEqual(now.course,s.baseline.course_completion);assert.equal(now.revision,JSON.parse(pair.pointerText).revision);
    assert.equal(await geometry(),original);
+   await page.waitForFunction(count=>AtlasShell.state().activeFrame.contentWindow.PublicProgress?.completed_project_count===count,now.count);
    await page.waitForFunction(count=>{const w=AtlasShell.state().activeFrame.contentWindow;return w.SkillProgress&&w.document.querySelector('#progress-overview .overview-metric:nth-child(2) b').textContent===String(count);},now.count);
    assert.match(await page.frameLocator('iframe[data-active=true]').locator('#progress-overview').innerText(),new RegExp(now.learned+' / 3,106'));
    const entries=page.locator('#hyperskill-portfolio li');assert.equal(await entries.count(),now.count);
@@ -43,6 +44,12 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   }
   assert((await state()).learned>32);
+  await page.evaluate(()=>AtlasShell.navigate({view:'atlas',project:String(window.HyperskillPortfolio.state().snapshot.portfolio.find(p=>p.archive_schema===4&&p.requirements_state==='KNOWN').project_id)}));
+  await page.waitForFunction(()=>AtlasShell.state().activeFrame?.contentWindow.ScopeApp?.state().L&&!AtlasShell.state().activeFrame.contentWindow.ScopeApp.state().busy);
+  const mapped=await page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow,s=w.ScopeApp.state();return s.scope.explicit_topic_ids.map(id=>({id,learned:s.ux.topic(id).learned,verified:s.ux.topic(id).verified}));});
+  assert(mapped.length>0);assert(mapped.every(t=>t.learned===true));assert(mapped.every(t=>t.verified===s.baseline.verified_topic_ids.includes(t.id)));
+  await page.evaluate(()=>AtlasShell.navigate({view:'skill-tree'}));
+  await page.waitForFunction(()=>AtlasShell.state().activeFrame?.contentWindow.SkillProgress);
   assert.equal(await page.locator(`[data-project-id="${s.unmapped}"]`).getAttribute('data-mapping'),'UNMAPPED');
   assert.equal(await page.locator(`[data-project-id="${s.unknown}"]`).getAttribute('data-mapping'),'UNKNOWN');
   assert.equal(await page.locator(`[data-project-id="${s.empty}"]`).getAttribute('data-mapping'),'KNOWN_EMPTY');
@@ -58,6 +65,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   for(const [name,query]of [['global',''],['course8','?course=8'],['project113','?project=113'],['stage617','?project=113&stage=617']]){
    await page.goto(base+query);await page.waitForFunction(()=>HyperskillPortfolio.state()?.status==='current');await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow;return w?.AtlasV6?.state().L||w?.ScopeApp?.state().L;});
    assert.equal(await geometry(),accepted[name]);
+   if(name==='global'){const flags=await page.evaluate(()=>{const s=AtlasShell.state().activeFrame.contentWindow.AtlasV6.state();return [...s.renderer.byKey.values()].filter(n=>n.type==='topic').map(n=>({id:Number(n.key.split(':')[1]),learned:n.learned,verified:n.verified}));});const learned=new Set(JSON.parse(pair.payloadText).projects.filter(p=>s.scopes.projects.find(r=>r.scope_id===p.project_id)?.state==='KNOWN').flatMap(p=>s.scopes.projects.find(r=>r.scope_id===p.project_id).explicit_topic_ids));assert(flags.filter(t=>learned.has(t.id)).every(t=>t.learned===true));assert(flags.every(t=>Boolean(t.verified)===s.baseline.verified_topic_ids.includes(t.id)));}
    await page.waitForFunction(expected=>AtlasShell.state().activeFrame.contentWindow.PublicProgress?.completed_project_count===expected,count);
   }
   await page.goto(base+'?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state()?.status==='current'&&AtlasShell.state().activeFrame?.contentWindow.SkillProgress);

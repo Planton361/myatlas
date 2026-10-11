@@ -38,7 +38,7 @@
       "operation": "insert"
     },
     "views/knowledge-atlas-v6-skill-tree/progress-ui.js": {
-      "after": "51e15c5a904af41da56cd09838dad5336cb9c5a608f4423d468905491b832c7a",
+      "after": "5137b4109795a6e99c8f4346c092c5cc0ffe21c58011bac710f1e0adc92e3715",
       "before": "66fc520f46aaf2ea9c0f0aed8749935b8374149ffe6be8d0ffc65df0606e322f",
       "operation": "replace",
       "source": "src/supplements/hyperskill-index-v1/progress-ui.js"
@@ -53,10 +53,10 @@
     "src/supplements/hyperskill-index-v1/config.json": "dbe6645c9019cf8316b6bc55b288d90bf18e07b2db905d7dc369274905e31f59",
     "src/supplements/hyperskill-index-v1/portfolio.css": "db23ce131426287ef112eece2de61d0fb75a9122e40afed1756d64c6300869b4",
     "src/supplements/hyperskill-index-v1/portfolio.js": "e26b5422924fa012b5453cce8f7e32fcc0ba9ca7390cc836a8fc341b06eee03a",
-    "src/supplements/hyperskill-index-v1/progress-ui.js": "51e15c5a904af41da56cd09838dad5336cb9c5a608f4423d468905491b832c7a",
+    "src/supplements/hyperskill-index-v1/progress-ui.js": "5137b4109795a6e99c8f4346c092c5cc0ffe21c58011bac710f1e0adc92e3715",
     "src/supplements/hyperskill-index-v1/projection.js": "ac59bd3ed605e6b23c6e99b7009adee8846fdd02225fd96a9d6e5f18f96422c6",
-    "src/supplements/hyperskill-index-v1/reader.js": "3cb9056491f99db04c1349b8c2bec336c073019df861d9e6bb68ac13f6828cf5",
-    "src/supplements/hyperskill-index-v1/view.js": "3d57586072f40fac46304641cb58ce4d6953160f453c47c9190876bb65df132a"
+    "src/supplements/hyperskill-index-v1/reader.js": "d2655af1bcc1ad18982197efd9907596cd843bbc640c37115561fb4f58ce2708",
+    "src/supplements/hyperskill-index-v1/view.js": "a39135599c33bbfda447ee2ff8a66110e60713cccd3340bcd4dda9c341ffb7ad"
   },
   "version": "hyperskill-index-v1"
 }

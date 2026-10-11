@@ -134,7 +134,7 @@ function create({fallback,derive=x=>x,fetcher=g.fetch.bind(g),storage=null,crypt
    const valid=await validate(pointerText,payloadText,crypto);
    require(!seen.has(p.revision)||receipt?.pointer.revision===p.revision,'previous revision returned');
    if(receipt?.pointer.revision===p.revision)require(receipt.pointer.index_sha256===p.index_sha256,'immutable revision changed');
-   return {valid,next:derive(valid.index)};
+   return {valid,next:receipt?.pointer.revision===p.revision?snapshot:derive(valid.index)};
   })();
   inflight=Promise.race([work,timed]).then(({valid,next})=>{
    if(token!==serial)return state();
