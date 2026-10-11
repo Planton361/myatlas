@@ -98,3 +98,14 @@ test('case aliases across different archives cannot evade per-file inventory che
  value.projects.push(row);const pair=await s.rehash(value,JSON.parse(pairs[0].pointerText));
  await assert.rejects(reader.validate(pair.pointerText,pair.payloadText,crypto),/case alias/);
 });
+test('canceled older fetch cannot overwrite a newer request or its persisted cache',async()=>{
+ let release,first=true;const cache=s.storage(),events=[];
+ const r=reader.create({fallback:projector.fallback,crypto,storage:cache,derive:projector.snapshot,onChange:state=>events.push(state.snapshot.register.completed_project_count),fetcher:async(url,options)=>{
+  if(first){first=false;await new Promise(resolve=>{release=resolve;});return s.response(url,pairs[0].pointerText);}
+  return s.fetchPair(pairs[3])(url,options);
+ }});
+ const old=r.refresh();r.cancel();await r.refresh();release();await old;
+ assert.equal(r.state().snapshot.register.completed_project_count,6);assert.deepEqual(events,[6]);
+ assert.equal(JSON.parse(JSON.parse(cache.value()).pointerText).revision,JSON.parse(pairs[3].pointerText).revision);
+ const snapshot=r.state().snapshot;await r.refresh();assert.strictEqual(r.state().snapshot,snapshot);
+});

@@ -77,5 +77,7 @@ class DynamicIndexReleaseTests(unittest.TestCase):
         self.assertEqual(progress['global'],baseline['global_progress'])
         self.assertEqual(progress['verified_topic_ids'],baseline['verified_topic_ids'])
         self.assertEqual(progress['course_completion'],baseline['course_completion'])
+        semantic={k:v for k,v in progress.items() if k!='source'}
+        self.assertEqual(hashlib.sha256(json.dumps(semantic,sort_keys=True,separators=(',',':')).encode()).hexdigest(),baseline['semantic_projection_sha256'])
         report=dict(archive_sha256=actual,completed_project_ids=progress['completed_project_ids'],global_progress=progress['global'],verified_topic_ids=progress['verified_topic_ids'],course_completion=progress['course_completion'],accepted_geometry=baseline['geometry'])
         (ROOT/'test-results/index-baseline.json').write_text(json.dumps(report,sort_keys=True,indent=2)+'\n')

@@ -17,7 +17,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   await context.route(s.reader.ENDPOINT,route=>{requests++;return route.fulfill(missing?{status:404,body:'not published'}:{status:200,contentType:'application/json',body:pair.pointerText});});
   await context.route('https://raw.githubusercontent.com/Planton361/hyperskill-projects/**',route=>route.fulfill({status:200,contentType:'application/json',body:pair.payloadText}));
   await context.addInitScript(()=>{addEventListener('unhandledrejection',event=>console.error('Index test unhandled rejection',location.href,String(event.reason)));addEventListener('error',event=>console.error('Index test window error',location.href,event.message,event.filename));});
-  const page=await context.newPage();page.on('console',message=>{if(message.type()==='error')console.error(engineName,width,phase,message.text());});page.on('pageerror',error=>{errors.push(error.message);console.error(engineName,width,phase,error.message,error.stack);});
+  const page=await context.newPage();page.on('console',message=>{if(message.type()==='error'&&message.text().startsWith('Index test '))console.error(engineName,width,phase,message.text());});page.on('pageerror',error=>{errors.push(error.message);console.error(engineName,width,phase,error.message,error.stack);});
   const state=()=>page.evaluate(()=>{const s=HyperskillPortfolio.state();return {status:s.status,revision:s.revision,count:s.snapshot.register.completed_project_count,learned:s.snapshot.analytics.global().learned,verified:s.snapshot.analytics.global().verified,ids:s.snapshot.register.completed_project_ids,course:s.snapshot.completion.course_completion};});
   async function go(query=''){phase='go '+query;await page.goto(base+query);await page.waitForFunction(()=>window.AtlasShell?.state().activeFrame?.contentWindow.AtlasV6?.state().L||window.AtlasShell?.state().activeFrame?.contentWindow.ScopeApp?.state().L);await page.waitForFunction(()=>window.HyperskillPortfolio?.state());await viewReady();}
   async function viewReady(){await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow,r=w?.AtlasV6?.state().renderer;return w?.HyperskillView?.state()?.snapshot===HyperskillPortfolio.state()?.snapshot&&(!r?.worker||r.workerReady);});}
@@ -26,7 +26,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   await page.locator('#hyperskill-portfolio summary').click();assert.match(await page.locator('#hyperskill-portfolio').innerText(),/unavailable.*Update unavailable/s);
   const accepted={};
   for(const [name,query]of [['global',''],['personal','?view=skill-tree'],['course8','?course=8'],['project113','?project=113'],['stage617','?project=113&stage=617']]){
-   await go(query);accepted[name]=await geometry();if(name!=='personal')assert.equal(hash(accepted[name]),fingerprints[name]);
+   await go(query);accepted[name]=await geometry();assert.equal(hash(accepted[name]),fingerprints[name]);
   }
   // Switch once to a full valid snapshot, then add four versioned projects in
   // place. No navigation reload, app build or fixture mutation of progress.json.
