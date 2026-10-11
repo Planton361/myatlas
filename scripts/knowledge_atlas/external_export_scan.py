@@ -248,7 +248,17 @@ def _universal_files(directory, manifest):
     if not code_count:
         raise ValueError('At least one explicitly selected solution file required')
     _public_text((directory / 'README.md').read_bytes(), 'README.md', code=True)
-    _public_text(json.dumps(manifest, ensure_ascii=False).encode('utf-8'), 'manifest', code=True)
+    def check_metadata(value):
+        if isinstance(value, str):
+            _public_text(value.encode('utf-8'), 'manifest metadata', code=True)
+        elif isinstance(value, dict):
+            for key, item in value.items():
+                check_metadata(key)
+                check_metadata(item)
+        elif isinstance(value, list):
+            for item in value:
+                check_metadata(item)
+    check_metadata(manifest)
     return dict(project_id=pid, status='completed', attested_by='owner', observed_at=completion['confirmed_at'])
 
 
