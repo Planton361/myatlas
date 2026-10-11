@@ -1,0 +1,71 @@
+{
+  "application_commit": "7fff57c49718c5fa6d3882a2d0e2ed05661867e7",
+  "archive_commit": "100b161fb7851ca3edbc8d73163b9e5a814a2806",
+  "archive_sha256": {
+    "java/My First Project with Java/.hyperskill-import.json": "71cbbec80ca2733f251712d7bd5389d6d0e404262a1ef017d11c0bd010353067",
+    "java/My First Project with Java/README.md": "6329b4dcd2fc45000e3ce52aa9961a7d655be37fec68c8131c6e84cee2f36b51",
+    "java/My First Project with Java/build.gradle.kts": "c5778153ec45af81a78a4199aa6d954c5c288464d4b32eaddceb19cc89bc6342",
+    "java/My First Project with Java/gradle/wrapper/gradle-wrapper.jar": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+    "java/My First Project with Java/gradle/wrapper/gradle-wrapper.properties": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+    "java/My First Project with Java/gradlew": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+    "java/My First Project with Java/gradlew.bat": "d539676c48b596afda64c963ec8f7ee56c7b3fe7e3b81d1dbe2d1a1e3dd9e9f8",
+    "java/My First Project with Java/settings.gradle.kts": "ad3bc830125cada7a6443b56649f9c04043c50627bd03ebe01622861882702e9",
+    "java/My First Project with Java/src/main/java/calculator/Item.java": "1f0564275616ce0f27ebbaa0457c0bad452353e39e5d8e7c9cb8255c133b0f38",
+    "java/My First Project with Java/src/main/java/calculator/Main.java": "9b24f41f4af5fc986c6265bfcd03471ad1ff048540d1c2fdc205e07554a10ef5",
+    "java/Simple Chat Bot with Java/.hyperskill-import.json": "27bcc7dbd92f7dbb3a2fb536523918a9745f1a370c4b0cb01c230696028eefee",
+    "java/Simple Chat Bot with Java/README.md": "59e293f65f551a325d189775cf854a98a6056fc199a96e39e6ad70424ceb5a20",
+    "java/Simple Chat Bot with Java/build.gradle.kts": "ce0d5748eccc4b7ca1f6db81d1e7e91215de602cbe20a43cddcf3157eeeaf984",
+    "java/Simple Chat Bot with Java/gradle/wrapper/gradle-wrapper.jar": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+    "java/Simple Chat Bot with Java/gradle/wrapper/gradle-wrapper.properties": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+    "java/Simple Chat Bot with Java/gradlew": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+    "java/Simple Chat Bot with Java/gradlew.bat": "d539676c48b596afda64c963ec8f7ee56c7b3fe7e3b81d1dbe2d1a1e3dd9e9f8",
+    "java/Simple Chat Bot with Java/settings.gradle.kts": "723d2394d8fb5c4cfc7d066ddc9bf44773d8d759178b75d39ca9ee003877ad27",
+    "java/Simple Chat Bot with Java/src/main/java/bot/SimpleBot.java": "8d226b1bc5701508c47bc90590352b50641c37593aa8f9818bf4508c70958b0c",
+    "java/Zookeeper with Java/.hyperskill-import.json": "8d16904afd5ba85c7aa2d4e771e65338e7ff2ae2496ea86aea3e7891148f45fc",
+    "java/Zookeeper with Java/README.md": "b03b4061b02f3d0478dd8393d018afecb15577f5c85873f3d69dc79ceb8b7c70",
+    "java/Zookeeper with Java/src/Main.java": "bcbbe093891db5551df408c0f0065bd17f48f139481676139757ff05d5719d66"
+  },
+  "branches": {
+    "hyperskill-projects": "main",
+    "myatlas": "main"
+  },
+  "completed_project_ids": [
+    113,
+    229,
+    380
+  ],
+  "course_completion": {
+    "records": [],
+    "schema": 1
+  },
+  "geometry": {
+    "course8": "ab8e05971ca8fb9d077b491a766554f5b84118e068433afe4c17faa7e91fb89b",
+    "global": "1306993ec8a1b7a80edda4f620fb96ba5d4803c0d81ded334b92efa85cdf1174",
+    "personal": "a60fc22e272079c91f39cfed9c01af5865bae29120e6d6f7801b02da96cd6348",
+    "project113": "33dc51873bcbd33fa6ad2de854dd719e525706bdb764a50578570d1f73e89034",
+    "stage617": "24edf473c9e97b7ccbb287464302a4bbf6ffadff33efdc265076b5ae6b51455e"
+  },
+  "global_progress": {
+    "eligible": 3106,
+    "learned": 32,
+    "state": "KNOWN",
+    "verified": 12
+  },
+  "schema": 1,
+  "semantic_projection_sha256": "1a86243ba9c3581c709417281cd18498bb72b5b0bfc23a91baa6bcffa0086878",
+  "verified_topic_ids": [
+    15,
+    25,
+    31,
+    32,
+    36,
+    87,
+    88,
+    148,
+    152,
+    259,
+    571,
+    1761
+  ],
+  "working_trees": "clean at intake"
+}

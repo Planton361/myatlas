@@ -24,10 +24,10 @@ def external_inputs(root, evidence_root, ref='HEAD'):
         meta, name = item.split(b'\t', 1)
         entries[name.decode()] = meta.decode().split()
     manifests = sorted(n for n in entries if len(n.split('/')) == 3 and n.endswith('/.hyperskill-import.json'))
-    if any(n.split('/')[0] not in ('java','python') for n in manifests):
-        raise ValueError('Unsupported canonical export language')
+    if any(n.split('/')[0] not in ('java','python','projects') for n in manifests):
+        raise ValueError('Unsupported canonical archive root')
     for name in entries:
-        if len(name.split('/')) >= 3 and name.split('/')[0] in ('java','python') and '/'.join(name.split('/')[:2])+'/.hyperskill-import.json' not in manifests:
+        if len(name.split('/')) >= 3 and name.split('/')[0] in ('java','python','projects') and '/'.join(name.split('/')[:2])+'/.hyperskill-import.json' not in manifests:
             raise ValueError('Canonical project directory missing export manifest: ' + name)
     if not manifests:
         raise ValueError("No canonical project exports found; preserve previous deployment")
@@ -61,7 +61,7 @@ def project_external(root, evidence_root, ref='HEAD'):
     inputs = external_inputs(root, evidence_root, ref)
     names = ['scripts/sync-project-completion.py', 'scripts/knowledge_atlas/git_completion.py',
              'scripts/knowledge_atlas/project_completion.py', 'scripts/knowledge_atlas/course_completion.py',
-             'scripts/knowledge_atlas/completion_projection.cjs',
+             'scripts/knowledge_atlas/completion_projection.cjs', 'scripts/knowledge_atlas/external_completion_projection.cjs',
              'src/myatlas/knowledge-atlas-v6-skill-tree/progress-analytics.js',
              'scripts/knowledge_atlas/external_completion.py', 'scripts/knowledge_atlas/external_export_scan.py', 'scripts/sync-hyperskill-projects.py',
              'scripts/build-myatlas-external.py', 'scripts/knowledge_atlas/external_release.py']
@@ -71,5 +71,5 @@ def project_external(root, evidence_root, ref='HEAD'):
         if raw != git(root, 'show', 'HEAD:' + name) or (root / name).is_symlink():
             raise ValueError('Uncommitted progress implementation')
         inputs['source']['implementation_sha256'][name] = hashlib.sha256(raw).hexdigest()
-    result = subprocess.check_output(['node', str(root / 'scripts/knowledge_atlas/completion_projection.cjs')], input=json.dumps(inputs).encode())
+    result = subprocess.check_output(['node', str(root / 'scripts/knowledge_atlas/external_completion_projection.cjs')], input=json.dumps(inputs).encode())
     return json.loads(result)
