@@ -29,7 +29,7 @@ function create({catalog,scopes,baseline,catalogBinding,analytics=g.ProgressAnal
  const a=analytics.create({catalog,scopes,completion:baseline}),rows=baseline.completion_register?.projects||baseline.projects;
  const fallback=Object.freeze({analytics:a,completion:baseline,catalog_binding:catalogBinding,source_revision:baseline.source.project_commit,
   register:baseline.completion_register||{schema:1,projects:rows,completed_project_ids:rows.map(p=>p.project_id),completed_project_count:rows.length,unmapped_project_ids:[]},
-  portfolio:rows.map(p=>({...p,title:p.title||known.get(p.project_id)?.title||'Hyperskill Project '+p.project_id,languages:p.languages||[],code_url:null}))});
+  portfolio:rows.map(p=>({...p,title:p.title||known.get(p.project_id)?.title||'Hyperskill Project '+p.project_id,languages:p.languages||[],code_url:g.HyperskillIndex.codeURL(baseline.source.project_commit,p.source.slice(0,p.source.lastIndexOf('/'))).replace('/blob/','/tree/')}))});
  return {snapshot,fallback};
 }
 g.HyperskillProjection={create};if(typeof module!=='undefined')module.exports=g.HyperskillProjection;

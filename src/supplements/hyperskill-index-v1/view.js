@@ -6,8 +6,11 @@ function publish(state){g.PublicProgress={...state.snapshot.completion,source:{.
 g.HyperskillView={subscribe(fn){callbacks.add(fn);if(current){fn(current);publish(current);}}};
 (async()=>{
  if(parent===g||!parent.HyperskillPortfolio||!await parent.HyperskillPortfolio.ready)return;
- while((!g.AtlasV6&&!g.ScopeApp)||g.ScopeApp?.state().busy)await new Promise(resolve=>setTimeout(resolve,30));
- parent.HyperskillPortfolio.subscribe(state=>{
+ let unsubscribe,closed=false;
+ g.addEventListener('pagehide',event=>{if(event.persisted)return;closed=true;unsubscribe?.();const r=g.AtlasV6?.state().renderer;if(r?.worker){r.worker.onerror=e=>e.preventDefault();r.worker.terminate();}});
+
+ while((!g.AtlasV6&&!g.ScopeApp)||g.ScopeApp?.state().busy){if(closed)return;await new Promise(resolve=>setTimeout(resolve,30));}
+ if(closed)return;unsubscribe=parent.HyperskillPortfolio.subscribe(state=>{
   current=state;if(lastSnapshot===state.snapshot)return;lastSnapshot=state.snapshot;
   const a=state.snapshot.analytics;
   if(g.ScopeApp){

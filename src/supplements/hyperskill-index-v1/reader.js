@@ -114,7 +114,7 @@ async function download(url,limit,fetcher,signal){
 }
 const CACHE='myatlas.hyperskill-index.v1';
 function create({fallback,derive=x=>x,fetcher=g.fetch.bind(g),storage=null,crypto=g.crypto,timeout=10000,onChange=()=>{}}){
- let snapshot=fallback,status='unavailable',error=null,receipt=null,serial=0,inflight=null;
+ let snapshot=fallback,status='unavailable',error=null,receipt=null,serial=0,inflight=null,activeAbort=null;
  const seen=new Set();
  const state=()=>({snapshot,status,error,revision:receipt?.pointer.revision||fallback.source_revision,index_sha256:receipt?.pointer.index_sha256||null,store_revision:receipt?.store_revision||null});
  const notify=()=>onChange(state());
@@ -125,7 +125,7 @@ function create({fallback,derive=x=>x,fetcher=g.fetch.bind(g),storage=null,crypt
  }
  function refresh(){
   if(inflight)return inflight;
-  const token=++serial,abort=new AbortController();
+  const token=++serial,abort=new AbortController();activeAbort=abort;
   let timer;
   const timed=new Promise((_,reject)=>{timer=setTimeout(()=>{abort.abort();reject(Error('Hyperskill index: timeout'));},timeout);});
   const work=(async()=>{
@@ -141,12 +141,12 @@ function create({fallback,derive=x=>x,fetcher=g.fetch.bind(g),storage=null,crypt
    receipt=valid;snapshot=next;seen.add(valid.pointer.revision);status='current';error=null;
    try{storage?.setItem(CACHE,JSON.stringify({schema:1,pointerText:valid.pointerText,payloadText:valid.payloadText}));}catch{/* Storage disabled/full: retain valid memory snapshot. */}
    notify();return state();
-  }).catch(e=>{if(token===serial){status=receipt?'stale':'unavailable';error=e.message;notify();}return state();}).finally(()=>{clearTimeout(timer);abort.abort();inflight=null;});
+  }).catch(e=>{if(token===serial){status=receipt?'stale':'unavailable';error=e.message;notify();}return state();}).finally(()=>{clearTimeout(timer);abort.abort();if(token===serial){inflight=null;activeAbort=null;}});
   return inflight;
  }
  // Invalidates late responses, e.g. when the hosting view is disposed. No SHA
  // lexical ordering is invented: source ancestry is enforced by publication.
- function cancel(){++serial;}
+ function cancel(){++serial;activeAbort?.abort();activeAbort=null;inflight=null;}
  return {state,restore,refresh,cancel};
 }
 g.HyperskillIndex={REPOSITORY,ENDPOINT,codeURL,canonical,encode,decode,pointer,payload,validate,digest,create,CACHE};

@@ -1,7 +1,7 @@
 /* The shell owns one complete data snapshot shared by every Atlas frame. */
 (async()=>{
 'use strict';
-const listeners=new Set();let reader,enabled=false,resolveReady;
+const listeners=new Set();let reader,enabled=false,resolveReady,closed=false,interval=null;
 const ready=new Promise(resolve=>{resolveReady=resolve;});
 window.HyperskillPortfolio=Object.freeze({ready,get enabled(){return enabled;},state:()=>reader?.state(),subscribe(fn){listeners.add(fn);if(reader)fn(reader.state());return()=>listeners.delete(fn);},refresh:()=>reader?.refresh()});
 try{
@@ -35,9 +35,10 @@ try{
   while(panel.children.length>1)panel.lastElementChild.remove();panel.append(fragment);
  }
  reader=HyperskillIndex.create({fallback:projection.fallback,derive:projection.snapshot,storage,onChange:state=>{for(const fn of listeners)fn(state);render(state);}});
- window.addEventListener('pagehide',()=>reader.cancel(),{once:true});
+ window.addEventListener('pagehide',()=>{closed=true;reader.cancel();clearInterval(interval);});
+ window.addEventListener('pageshow',event=>{if(event.persisted){closed=false;reader.refresh();interval=setInterval(refresh,300000);}});
  render(reader.state());resolveReady(true);await reader.restore();await reader.refresh();
- let last=Date.now();const refresh=()=>{if(document.visibilityState==='visible'&&Date.now()-last>=60000){last=Date.now();reader.refresh();}};
- document.addEventListener('visibilitychange',refresh);setInterval(refresh,300000);
+ let last=Date.now();const refresh=()=>{if(!closed&&document.visibilityState==='visible'&&Date.now()-last>=60000){last=Date.now();reader.refresh();}};
+ document.addEventListener('visibilitychange',refresh);if(!closed)interval=setInterval(refresh,300000);
 }catch(error){resolveReady(false);const message=document.createElement('p');message.id='hyperskill-index-error';message.textContent='Project index unavailable: '+error.message;document.querySelector('#view-content').prepend(message);}
 })();

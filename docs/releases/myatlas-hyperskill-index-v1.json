@@ -52,11 +52,11 @@
     "src/myatlas/knowledge-atlas-scope-pyramid/scope-index.json": "879c7c4565e2ab72092f3fa8ca184cba062ad6faf5245d0a9f33e8b390bd4b09",
     "src/supplements/hyperskill-index-v1/config.json": "dbe6645c9019cf8316b6bc55b288d90bf18e07b2db905d7dc369274905e31f59",
     "src/supplements/hyperskill-index-v1/portfolio.css": "db23ce131426287ef112eece2de61d0fb75a9122e40afed1756d64c6300869b4",
-    "src/supplements/hyperskill-index-v1/portfolio.js": "ab7a43ab8089e07b81ef55452691ce44586d6fdf8bf2731424168a3c363e3001",
+    "src/supplements/hyperskill-index-v1/portfolio.js": "b7fa85608d8f16e54d954b54bc46a147c896ff40d54f3eb969556680ef48b357",
     "src/supplements/hyperskill-index-v1/progress-ui.js": "5137b4109795a6e99c8f4346c092c5cc0ffe21c58011bac710f1e0adc92e3715",
-    "src/supplements/hyperskill-index-v1/projection.js": "ac59bd3ed605e6b23c6e99b7009adee8846fdd02225fd96a9d6e5f18f96422c6",
-    "src/supplements/hyperskill-index-v1/reader.js": "3bfac7f0dd15fff847a9e92bac75bb10d05c135f49d4957c41487bc6a5be00b4",
-    "src/supplements/hyperskill-index-v1/view.js": "667ef20e6a999537e67d6ab1ba6c17cd7c4327c855018ec7fc33e6a31af40371"
+    "src/supplements/hyperskill-index-v1/projection.js": "bc2537450d8a99688fbc8ee76d4093242bf76bf61ec97e8bd4f7872e9867c7d3",
+    "src/supplements/hyperskill-index-v1/reader.js": "96c74ef293ac2c8f0469b95ad339365f35e70fd74d398b78fcdf1841c1fe347f",
+    "src/supplements/hyperskill-index-v1/view.js": "70a5ca60bce85d99c17e8ff32ee807ff80fd35f2fb9b6b440f53ab950c251c02"
   },
   "version": "hyperskill-index-v1"
 }
