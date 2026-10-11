@@ -1,0 +1,62 @@
+{
+  "activation_policy": "Reviewed follow-up only after the real endpoint and immutable store are validated. No environment or URL activation.",
+  "assets": {
+    "hyperskill-index/config.json": "src/supplements/hyperskill-index-v1/config.json",
+    "hyperskill-index/portfolio.css": "src/supplements/hyperskill-index-v1/portfolio.css",
+    "hyperskill-index/portfolio.js": "src/supplements/hyperskill-index-v1/portfolio.js",
+    "hyperskill-index/projection.js": "src/supplements/hyperskill-index-v1/projection.js",
+    "hyperskill-index/reader.js": "src/supplements/hyperskill-index-v1/reader.js",
+    "hyperskill-index/view.js": "src/supplements/hyperskill-index-v1/view.js"
+  },
+  "edits": {
+    "index.html": {
+      "after": "699862345f859ccb56776273aac500f7e88f2db7bff924f2923c3f142848cd23",
+      "before": "987b23611009846db53af830f0d188484e21ad6b08376cb3009be64ad2e50176",
+      "new": "<link rel=\"stylesheet\" href=\"hyperskill-index/portfolio.css\"><script src=\"views/knowledge-atlas-v6-skill-tree/progress-analytics.js\"></script><script src=\"hyperskill-index/reader.js\"></script><script src=\"hyperskill-index/projection.js\"></script><script src=\"hyperskill-index/portfolio.js\"></script><script src=\"shell.js\"></script>",
+      "old": "<script src=\"shell.js\"></script>",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-scope-pyramid/index.html": {
+      "after": "88b9c6fbf65a751b5f343ec0dc962f5e7028a601067f790359c2d1a83ef24241",
+      "before": "c57fc5bb2c1c02faba79c19d06b8a7126a9cddbaded2d657465659d5d4e6bd99",
+      "new": "<script src=\"../../hyperskill-index/view.js\"></script><script src=\"app.js\"></script>",
+      "old": "<script src=\"app.js\"></script>",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-v6-global/index.html": {
+      "after": "ecf41547b65169e0417bafae8fa1b3a54614088a7dd5d79b495a07ed4099782c",
+      "before": "24696a6e3903d4c1e262addef795b03d3e92db50370f0f01fc891bbc91c50073",
+      "new": "<script src=\"../../hyperskill-index/view.js\"></script><script src=\"app.js\"></script>",
+      "old": "<script src=\"app.js\"></script>",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-v6-skill-tree/index.html": {
+      "after": "ae3f938cda360166dcdfaabe5919f76f8e91caffda8bda6c2418eaeeff89ecbc",
+      "before": "36ec73f307df05d6670d0ea6fdd2cf6da8e50bb46599702845ed730101837be8",
+      "new": "<script src=\"../../hyperskill-index/view.js\"></script><script src=\"app.js\"></script>",
+      "old": "<script src=\"app.js\"></script>",
+      "operation": "insert"
+    },
+    "views/knowledge-atlas-v6-skill-tree/progress-ui.js": {
+      "after": "5137b4109795a6e99c8f4346c092c5cc0ffe21c58011bac710f1e0adc92e3715",
+      "before": "66fc520f46aaf2ea9c0f0aed8749935b8374149ffe6be8d0ffc65df0606e322f",
+      "operation": "replace",
+      "source": "src/supplements/hyperskill-index-v1/progress-ui.js"
+    }
+  },
+  "geometry_policy": "Status overlays only; retain catalog membership, all five geometries and existing packing. Newly learned Topics outside the personal map remain visible in the portfolio and Global Atlas.",
+  "production_enabled": false,
+  "schema": 1,
+  "sources": {
+    "src/myatlas/knowledge-atlas-scope-pyramid/catalog.json": "43108621762bcac6a29ece79cf4df71d2ef3a40ca80275c0736beef80862e332",
+    "src/myatlas/knowledge-atlas-scope-pyramid/scope-index.json": "879c7c4565e2ab72092f3fa8ca184cba062ad6faf5245d0a9f33e8b390bd4b09",
+    "src/supplements/hyperskill-index-v1/config.json": "dbe6645c9019cf8316b6bc55b288d90bf18e07b2db905d7dc369274905e31f59",
+    "src/supplements/hyperskill-index-v1/portfolio.css": "db23ce131426287ef112eece2de61d0fb75a9122e40afed1756d64c6300869b4",
+    "src/supplements/hyperskill-index-v1/portfolio.js": "d9b5744c66f1ccd10126e6ed8478abeb8c6120f662ec66b0cf9d443437a772c9",
+    "src/supplements/hyperskill-index-v1/progress-ui.js": "5137b4109795a6e99c8f4346c092c5cc0ffe21c58011bac710f1e0adc92e3715",
+    "src/supplements/hyperskill-index-v1/projection.js": "bc2537450d8a99688fbc8ee76d4093242bf76bf61ec97e8bd4f7872e9867c7d3",
+    "src/supplements/hyperskill-index-v1/reader.js": "96c74ef293ac2c8f0469b95ad339365f35e70fd74d398b78fcdf1841c1fe347f",
+    "src/supplements/hyperskill-index-v1/view.js": "746a3e417274bb4cda515f88d3dd1c62a503ef31050694a74ea0da9026520a4f"
+  },
+  "version": "hyperskill-index-v1"
+}
