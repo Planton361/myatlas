@@ -1,0 +1,25 @@
+{
+  "status": "EXPECTED_ABSENT",
+  "endpoint": "https://planton361.github.io/hyperskill-projects/portfolio/current.json",
+  "credentials": "none",
+  "mocks": false,
+  "browsers": [
+    {
+      "engine": "chromium",
+      "anonymous_requests": 1,
+      "origin": "https://planton361.github.io",
+      "status": "EXPECTED_ABSENT",
+      "pointer_http_status": 404,
+      "payload_cors": "BLOCKED_BEFORE_BOOTSTRAP"
+    },
+    {
+      "engine": "webkit",
+      "anonymous_requests": 1,
+      "origin": "https://planton361.github.io",
+      "status": "EXPECTED_ABSENT",
+      "pointer_http_status": 404,
+      "payload_cors": "BLOCKED_BEFORE_BOOTSTRAP"
+    }
+  ],
+  "blocker": "Producer bootstrap requires separate owner approval"
+}

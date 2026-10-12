@@ -39,7 +39,7 @@ def approved(root):
     require(value['schema'] == 1 and value['version'] == 'hyperskill-index-v1' and value['production_enabled'] is False, 'Unapproved dynamic index activation')
     for name in [MANIFEST, 'scripts/knowledge_atlas/dynamic_index_release.py', 'scripts/build-myatlas-dynamic-index.py', *value['sources']]:
         path = root/name
-        require(not path.is_symlink() and path.read_bytes() == subprocess.check_output(['git','-C',str(root),'show','HEAD:'+name]), 'Uncommitted dynamic index input: '+name)
+        require(not any(p.is_symlink() for p in [path,*path.parents]) and path.read_bytes() == subprocess.check_output(['git','-C',str(root),'show','HEAD:'+name]), 'Uncommitted dynamic index input: '+name)
     for name, digest in value['sources'].items():
         require(sha((root/name).read_bytes()) == digest, 'Changed dynamic index source: '+name)
     return value
@@ -49,6 +49,7 @@ def release_selection(root):
     """Only a separately pinned additive release can change the packaged flag."""
     root = Path(root).resolve()
     if not (root/ACTIVATION).exists():
+        require(not subprocess.check_output(['git','-C',str(root),'ls-tree','HEAD','--',ACTIVATION]), 'Uncommitted removal of activation release')
         return dict(manifest=MANIFEST, sha256=REVIEWED_SHA, production_enabled=False), 'src/supplements/hyperskill-index-v1/config.json'
     raw = (root/ACTIVATION).read_bytes()
     require(sha(raw) == ACTIVATION_SHA, 'Unreviewed activation release')
@@ -59,7 +60,7 @@ def release_selection(root):
     require(value['config_source'] == source, 'Unapproved activation source')
     for name in (ACTIVATION, source):
         path = root/name
-        require(not path.is_symlink() and path.read_bytes() == subprocess.check_output(['git','-C',str(root),'show','HEAD:'+name]), 'Uncommitted activation input: '+name)
+        require(not any(p.is_symlink() for p in [path,*path.parents]) and path.read_bytes() == subprocess.check_output(['git','-C',str(root),'show','HEAD:'+name]), 'Uncommitted activation input: '+name)
         require(subprocess.check_output(['git','-C',str(root),'ls-tree','HEAD','--',name]).split(b'\t')[0].split()[:2] == [b'100644',b'blob'], 'Nonregular activation input')
     config_raw = (root/source).read_bytes()
     require(sha(config_raw) == value['config_sha256'], 'Changed activation config')

@@ -1,5 +1,6 @@
 """The additive activation is pinned; rollback restores the original disabled release."""
 import json
+import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,8 +15,11 @@ class ActivationReleaseTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name)
-        for name in (ACTIVATION,SOURCE,'src/supplements/hyperskill-index-v1/config.json'):
+        for name in (SOURCE,'src/supplements/hyperskill-index-v1/config.json'):
             p=self.root/name;p.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/name,p)
+        fixture=dict(schema=1,version='hyperskill-index-activation-v1',base_manifest=MANIFEST,base_sha256=REVIEWED_SHA,production_enabled=True,config_source=SOURCE,config_sha256=hashlib.sha256((self.root/SOURCE).read_bytes()).hexdigest())
+        p=self.root/ACTIVATION;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(fixture,sort_keys=True,indent=2)+'\n')
+        self.assertEqual(hashlib.sha256(p.read_bytes()).hexdigest(),ACTIVATION_SHA)
         self.git('init','-q');self.git('config','user.email','synthetic@example.invalid');self.git('config','user.name','Synthetic test')
         self.commit()
     def git(self,*args):return subprocess.check_output(['git','-C',str(self.root),*args],stderr=subprocess.PIPE)
@@ -42,6 +46,9 @@ class ActivationReleaseTests(unittest.TestCase):
         p=self.root/SOURCE;raw=p.read_bytes();p.unlink();p.symlink_to(self.root/'src/supplements/hyperskill-index-v1/config.json')
         with self.assertRaises(ValueError):release_selection(self.root)
         p.unlink();p.write_bytes(raw)
+    def test_uncommitted_removal_cannot_silently_disable(self):
+        (self.root/ACTIVATION).unlink()
+        with self.assertRaisesRegex(ValueError,'Uncommitted removal'):release_selection(self.root)
     def test_uncommitted_activation_cannot_be_packaged(self):
         self.git('rm','--cached',ACTIVATION);self.git('commit','-qm','No approved activation')
         with self.assertRaises(subprocess.CalledProcessError):release_selection(self.root)
