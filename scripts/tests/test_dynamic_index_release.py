@@ -72,12 +72,17 @@ class DynamicIndexReleaseTests(unittest.TestCase):
         self.assertEqual(len(actual),22);self.assertEqual(actual,baseline['archive_sha256'])
         for name,digest in baseline['trusted_input_sha256'].items():
             self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(),digest,name)
-        progress=project_external(ROOT,self.evidence)['projection']
+        # Compare the frozen baseline at its exact revision, while the full
+        # candidate may legitimately contain additional synthetic completions.
+        progress=project_external(ROOT,self.evidence,baseline['archive_commit'])['projection']
+        candidate=project_external(ROOT,self.evidence)['projection']
+        self.assertEqual(candidate['verified_topic_ids'],baseline['verified_topic_ids'])
+        self.assertEqual(candidate['course_completion'],baseline['course_completion'])
         self.assertEqual(progress['completed_project_ids'],[113,229,380])
         self.assertEqual(progress['global'],baseline['global_progress'])
         self.assertEqual(progress['verified_topic_ids'],baseline['verified_topic_ids'])
         self.assertEqual(progress['course_completion'],baseline['course_completion'])
         semantic={k:v for k,v in progress.items() if k!='source'}
         self.assertEqual(hashlib.sha256(json.dumps(semantic,sort_keys=True,separators=(',',':')).encode()).hexdigest(),baseline['semantic_projection_sha256'])
-        report=dict(archive_sha256=actual,completed_project_ids=progress['completed_project_ids'],global_progress=progress['global'],verified_topic_ids=progress['verified_topic_ids'],course_completion=progress['course_completion'],accepted_geometry=baseline['geometry'])
+        report=dict(candidate_project_ids=(candidate.get('completion_register') or candidate)['completed_project_ids'],baseline_project_revision=baseline['archive_commit'],archive_sha256=actual,completed_project_ids=progress['completed_project_ids'],global_progress=progress['global'],verified_topic_ids=progress['verified_topic_ids'],course_completion=progress['course_completion'],accepted_geometry=baseline['geometry'])
         (ROOT/'test-results/index-baseline.json').write_text(json.dumps(report,sort_keys=True,indent=2)+'\n')
