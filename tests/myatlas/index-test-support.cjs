@@ -3,11 +3,10 @@ const fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('no
 const root=path.resolve(__dirname,'../..'),read=p=>JSON.parse(fs.readFileSync(path.join(root,p)));
 const reader=require('../../src/supplements/hyperskill-index-v1/reader.js');
 const catalog=read('src/myatlas/knowledge-atlas-scope-pyramid/catalog.json'),scopes=read('src/myatlas/knowledge-atlas-scope-pyramid/scope-index.json'),candidate=JSON.parse(execFileSync(process.env.PYTHON||'python3.12',['-B','scripts/sync-hyperskill-projects.py','--evidence-root',process.env.HYPERSKILL_EVIDENCE_ROOT],{cwd:root,maxBuffer:16*1024*1024})).projection;
-// The wire fixtures always begin with the three reviewed identities. A cross-
-// repository application candidate can already contain further synthetic rows;
-// it must not silently change this fixed reader-unit fallback.
-const baseline=require('../../scripts/knowledge_atlas/completion_projection.cjs').project({catalog,scopes,
- completion:{...candidate,projects:candidate.projects.filter(p=>[113,229,380].includes(p.project_id))},source:candidate.source});
+// Fixed, independently validated real baseline, distinct from a growing app
+// candidate. Its exact archived revision is part of the accepted contract.
+const baselineRevision=read('docs/contracts/hyperskill-baseline-v1.json').archive_commit;
+const baseline=JSON.parse(execFileSync(process.env.PYTHON||'python3.12',['-B','scripts/sync-hyperskill-projects.py','--evidence-root',process.env.HYPERSKILL_EVIDENCE_ROOT,'--evidence-ref',baselineRevision],{cwd:root,maxBuffer:16*1024*1024})).projection;
 const assert=require('node:assert/strict');
 assert.deepEqual(baseline.completed_project_ids,[113,229,380]);assert.equal(baseline.global.learned,32);assert.equal(baseline.global.verified,12);
 const learned=new Set(baseline.effective_learned_topic_ids);

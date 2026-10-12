@@ -25,6 +25,10 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   async function geometry(){return page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow,L=(w.AtlasV6||w.ScopeApp).state().L;return JSON.stringify([L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.lines]),L.connectorSegments,L.trays,L.checkpoint]);});}
   await go('?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state().status==='unavailable');assert.deepEqual((await state()).ids,fallbackRegister.completed_project_ids);assert.equal((await state()).count,fallbackRegister.completed_project_count);assert.equal((await state()).learned,s.candidate.global.learned);assert.equal((await state()).verified,12);assert.deepEqual((await state()).course,s.candidate.course_completion);
   await page.locator('#hyperskill-portfolio summary').click();assert.match(await page.locator('#hyperskill-portfolio').innerText(),/unavailable.*Update unavailable/s);
+  // Keep the actual candidate fallback check above. The immutable geometry
+  // and data-only update exercise starts from the exact accepted static baseline,
+  // as in geometry-browser.cjs, even when the outer app candidate has grown.
+  await context.route('**/knowledge-map/progress.json',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(s.baseline)}));
   const accepted={};
   for(const [name,query]of [['global',''],['personal','?view=skill-tree'],['course8','?course=8'],['project113','?project=113'],['stage617','?project=113&stage=617']]){
    await go(query);accepted[name]=await geometry();assert.equal(hash(accepted[name]),fingerprints[name]);

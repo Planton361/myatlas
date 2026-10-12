@@ -52,3 +52,21 @@ temporären Erweiterungen (UNKNOWN 95, UNMAPPED 900000001, KNOWN 203).
 Eine Prüfung gegen ein Artefakt älterer App-/Projekt-SHAs wurde erwartungsgemäß durch
 `Public project progress mismatch` blockiert; nach Rebuild derselben geprüften
 Revision sind auch Reversal und Geometrie-Manipulationsprüfung grün.
+
+Die feste Reader-/Geometrie-Eingabe wird jetzt direkt durch den bestehenden
+Git-Reader an `baseline.archive_commit` erzeugt, nicht aus Kandidatenzeilen
+zusammengesetzt. Im Index-Browsertest wird zuerst der vollständige unveränderte
+Kandidaten-Fallback einschließlich UNMAPPED geprüft. Anschließend startet die
+lokale HTTP-Mocksequenz aus diesem validierten historischen statischen Snapshot,
+wie die bestehende `geometry-browser.cjs`-Abnahme. Alle fünf festen Hashassertions
+und die bytegleiche Geometrie bei späteren Indexupdates bleiben Pflicht.
+
+Zusätzliche vollständige lokale Mockprüfung mit bereits **sechs** statischen
+Kandidatenprojekten (KNOWN 203, UNKNOWN 95, UNMAPPED 900000001): sechs Release-
+Tests, 45 Reader-Tests und Chromium/WebKit jeweils 1440/390 px grün. Der feste
+Index-Fixture wächst danach ohne App-Build auf sieben Projekte und 33 gelernte
+Topics, weiterhin zwölf Verifikationen und fünf unveränderte Baselinegeometrien.
+Ein einzelner lokaler Navigation-Ready-Timeout im vorangegangenen Gesamtlauf
+wurde als Browserfehler festgehalten; die separate vollständige Vier-Kontext-
+Browserverifikation bestand unverändert, ohne Timeout-/Assertion-Abschwächung.
+Die endgültigen Gesamt-CI-Läufe bleiben der verpflichtende Abschlussnachweis.
