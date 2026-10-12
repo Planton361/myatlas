@@ -11,6 +11,8 @@ from .navigation_release import transform as navigation_transform
 from .presentation_release import transform as presentation_transform, verify_presentation
 
 MANIFEST = 'docs/releases/myatlas-hyperskill-index-v1.json'
+ACTIVATION = 'docs/releases/myatlas-hyperskill-index-activation-v1.json'
+ACTIVATION_SHA = '5c01912d54af5fd6dc783710250b9abbc3de1b38b16fe2b04814ac23223c2323'
 REVIEWED_SHA = '03666d1be1b6657f1ed00acf480bd02ae83498ab3fd2ea490af8c2770c16edef'
 
 
@@ -43,6 +45,34 @@ def approved(root):
     return value
 
 
+def release_selection(root):
+    """Only a separately pinned additive release can change the packaged flag."""
+    root = Path(root).resolve()
+    if not (root/ACTIVATION).exists():
+        return dict(manifest=MANIFEST, sha256=REVIEWED_SHA, production_enabled=False), 'src/supplements/hyperskill-index-v1/config.json'
+    raw = (root/ACTIVATION).read_bytes()
+    require(sha(raw) == ACTIVATION_SHA, 'Unreviewed activation release')
+    value = json.loads(raw)
+    require(set(value) == {'schema','version','base_manifest','base_sha256','production_enabled','config_source','config_sha256'}, 'Invalid activation release fields')
+    require(value['schema'] == 1 and value['version'] == 'hyperskill-index-activation-v1' and value['production_enabled'] is True and value['base_manifest'] == MANIFEST and value['base_sha256'] == REVIEWED_SHA, 'Invalid activation release')
+    source = 'src/supplements/hyperskill-index-activation-v1/config.json'
+    require(value['config_source'] == source, 'Unapproved activation source')
+    for name in (ACTIVATION, source):
+        path = root/name
+        require(not path.is_symlink() and path.read_bytes() == subprocess.check_output(['git','-C',str(root),'show','HEAD:'+name]), 'Uncommitted activation input: '+name)
+        require(subprocess.check_output(['git','-C',str(root),'ls-tree','HEAD','--',name]).split(b'\t')[0].split()[:2] == [b'100644',b'blob'], 'Nonregular activation input')
+    config_raw = (root/source).read_bytes()
+    require(sha(config_raw) == value['config_sha256'], 'Changed activation config')
+    disabled = json.loads((root/'src/supplements/hyperskill-index-v1/config.json').read_bytes())
+    require(json.loads(config_raw) == {**disabled,'enabled':True}, 'Activation changes more than the enabled flag')
+    return dict(manifest=ACTIVATION, sha256=ACTIVATION_SHA, production_enabled=True), source
+
+
+def release_assets(root, value):
+    attestation, config = release_selection(root)
+    return attestation, {**value['assets'], 'hyperskill-index/config.json':config}
+
+
 def transform(root, name, edit):
     raw = baseline(root, name)
     require(sha(raw) == edit['before'], 'Changed dynamic index baseline: '+name)
@@ -59,14 +89,15 @@ def transform(root, name, edit):
 def verify_dynamic(root, site, evidence_root, ref='HEAD'):
     root, site = Path(root).resolve(), Path(site).resolve()
     value = approved(root)
+    attestation, assets = release_assets(root, value)
     actual = inventory(site)
     runtime = json.loads((site/'runtime-manifest.json').read_bytes())
-    require(runtime.get('dynamic_index_release') == {'manifest':MANIFEST, 'sha256':REVIEWED_SHA, 'production_enabled':False}, 'Missing dynamic index provenance')
+    require(runtime.get('dynamic_index_release') == attestation, 'Missing dynamic index provenance')
     require(runtime['inventory'] == {p:s for p,s in actual.items() if p!='runtime-manifest.json'}, 'Dynamic index inventory mismatch')
     with tempfile.TemporaryDirectory(prefix='myatlas-dynamic-check-') as folder:
         canonical = Path(folder)/'knowledge-map'
         shutil.copytree(site, canonical)
-        for name, source in value['assets'].items():
+        for name, source in assets.items():
             require((site/name).read_bytes() == (root/source).read_bytes(), 'Changed dynamic index asset: '+name)
         # Only the pinned additive directory is removed from a disposable copy.
         shutil.rmtree(canonical/'hyperskill-index')
@@ -79,25 +110,26 @@ def verify_dynamic(root, site, evidence_root, ref='HEAD'):
         del runtime['dynamic_index_release']
         (canonical/'runtime-manifest.json').write_text(json.dumps(runtime,sort_keys=True,indent=2)+'\n')
         result = verify_presentation(root,canonical,evidence_root,ref)
-    return {**result,'dynamic_index_release':REVIEWED_SHA,'dynamic_index_enabled':False}
+    return {**result,'dynamic_index_release':attestation['sha256'],'dynamic_index_enabled':attestation['production_enabled']}
 
 
 def apply_dynamic(root, site, evidence_root, ref='HEAD'):
     root, site = Path(root).resolve(), Path(site).resolve()
     require(root/'build' in site.parents and not any(p.is_symlink() for p in [site,*site.parents]), 'Unsafe dynamic index destination')
     value = approved(root)
+    attestation, assets = release_assets(root, value)
     verify_presentation(root,site,evidence_root,ref)
     edits = {name:transform(root,name,edit) for name,edit in value['edits'].items()}
     for name, edit in value['edits'].items():
         require((site/name).read_bytes() == baseline(root,name), 'Unexpected dynamic index input')
     require(not (site/'hyperskill-index').exists(), 'Unexpected dynamic index assets')
     runtime = json.loads((site/'runtime-manifest.json').read_bytes())
-    for name, source in value['assets'].items():
+    for name, source in assets.items():
         destination=site/name;destination.parent.mkdir(parents=True,exist_ok=True)
         destination.write_bytes((root/source).read_bytes())
         runtime['inventory'][name]=sha(destination.read_bytes())
     for name, raw in edits.items():
         (site/name).write_bytes(raw);runtime['inventory'][name]=sha(raw)
-    runtime['dynamic_index_release']={'manifest':MANIFEST,'sha256':REVIEWED_SHA,'production_enabled':False}
+    runtime['dynamic_index_release']=attestation
     (site/'runtime-manifest.json').write_text(json.dumps(runtime,sort_keys=True,indent=2)+'\n')
     return verify_dynamic(root,site,evidence_root,ref)

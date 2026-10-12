@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from scripts.knowledge_atlas.dynamic_index_release import verify_dynamic
+from scripts.knowledge_atlas.dynamic_index_release import verify_dynamic, release_selection
 from scripts.knowledge_atlas.external_completion import project_external
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -32,13 +32,13 @@ class DynamicIndexReleaseTests(unittest.TestCase):
     def test_complete_reversal_preserves_all_existing_release_gates(self):
         result=self.verify()
         self.assertEqual(result['status'],'PASS')
-        self.assertFalse(result['dynamic_index_enabled'])
+        self.assertEqual(result['dynamic_index_enabled'],release_selection(ROOT)[0]['production_enabled'])
         self.assertTrue(result['historical_evidence_unchanged'])
 
     def test_activation_cannot_change_even_with_matching_inventory(self):
         config=json.loads((self.site/'hyperskill-index/config.json').read_bytes())
-        self.assertIs(config['enabled'],False)
-        config['enabled']=True
+        self.assertIs(config['enabled'],release_selection(ROOT)[0]['production_enabled'])
+        config['enabled']=not config['enabled']
         self.mutate('hyperskill-index/config.json',json.dumps(config).encode())
         with self.assertRaisesRegex(ValueError,'Changed dynamic index asset'):
             self.verify()
