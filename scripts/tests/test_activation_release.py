@@ -60,3 +60,12 @@ class ActivationReleaseTests(unittest.TestCase):
         self.assertIn('--expect-current',gate);self.assertNotIn('--allow-missing',gate)
         build=workflow.split('  build:\n',1)[1].split('  deploy:\n',1)[0]
         self.assertIn('validate-pages-candidate.py',build);self.assertIn('GITHUB_REF=refs/heads/main',build)
+
+    def test_cpu_navigation_preserves_strict_network_and_snapshot_guards(self):
+        code=(ROOT/'tests/leetcode-atlas/top-ui.cjs').read_text()
+        self.assertIn("if(url===H.ENDPOINT)return route.fulfill({status:200,contentType:'application/json',body:'{}\\n'})",code)
+        self.assertIn("url===R.URL,'Unexpected network destination'",code)
+        self.assertIn("q.headers().authorization,undefined",code)
+        self.assertIn("q.headers().cookie,undefined",code)
+        self.assertIn("HyperskillView?.state()?.snapshot===p.state()?.snapshot",code)
+        self.assertIn("state().status==='unavailable'",code)

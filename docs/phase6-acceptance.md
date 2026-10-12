@@ -93,6 +93,11 @@ project113  33dc51873bcbd33fa6ad2de854dd719e525706bdb764a50578570d1f73e89034
 stage617    24edf473c9e97b7ccbb287464302a4bbf6ffadff33efdc265076b5ae6b51455e
 ```
 
+Bereits bestandene lokale Python-3.12-Abnahme: **113 Producer-Tests** mit
+`MYATLAS_ROOT`, einschließlich 30 Imports (33 Projekte am Ende, 12 verifiziert,
+keine Course-Records); **41 Sync-/Smoke-/Aktivierungs-Tests**, ergänzt um den
+neuen strengen CPU-Navigationsvertrag. Kein importierter Code wurde ausgeführt.
+
 Prüfkommandos:
 
 ```bash
@@ -122,6 +127,22 @@ Fakeabschluss ausgelöst. PR-/Main-Diff-, Klassifizierungs- und schnelle
 Archiv/Index/Reader-Prüfungen werden mit versionierten temporären Fixtures
 geprüft; die tatsächliche Skipentscheidung folgt den überprüften Workflowguards.
 Diese Grenze darf nicht als öffentlich durchlaufener Class-A-Projekt-PR ausgegeben werden.
+
+Der aktivierte Kandidat deckte zusätzlich eine bisher nicht erreichte Browser-
+Fixturegrenze auf: LeetCode-Top-UI navigiert in den Atlas und lehnt dessen neuen
+Hyperskill-Pointer als unerwartete Netzadresse ab. Die Fixture isoliert jetzt
+ausschließlich den festen Pointer mit einem ungültigen kanonischen JSON-Objekt
+und prüft GET/fehlende Credentials. Die Wirevalidierung muss es ablehnen und
+den statischen Fallback erhalten.
+Die strenge Sperre aller anderen externen URLs bleibt unverändert; echte
+Index-/CORS-Abnahme bleibt der separate ungemockte Smoke, vollständiges Wachstum
+die bestehende Indexbrowser-Suite. Damit bleibt die Top-UI-Projektion konsistent
+mit ihrem geprüften statischen Snapshot auch nach der späteren Aktivierung.
+Beim aktiven Overlay können abgebrochene alte Workerladungen `networkidle`
+blockieren. Der Navigationstest wartet daher auf das tatsächliche fertige Modell,
+Fontstatus, Worker-Ready und identische vollständige Shell-/Frame-Snapshots,
+anstatt den verworfenen Worker als Bereitschaftskriterium zu benutzen. Alle
+zwölf Chromium/WebKit-Top-UI-Kombinationen bestanden diesen gezielten Test.
 
 Ein Zwischenlauf wurde korrekt von der Source-Provenienz blockiert, weil der
 Releasevalidator während des laufenden Tests noch uncommittete Verbesserungen
