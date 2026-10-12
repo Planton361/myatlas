@@ -9,7 +9,7 @@ const readerSource=fs.readFileSync(path.join(__dirname,'../../src/supplements/hy
  for(const [name,engine]of [['chromium',chromium],['webkit',webkit]]){
   const browser=await engine.launch({headless:true});
   try{
-   const context=await browser.newContext(),page=await context.newPage();
+   const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
    const anonymous=[];
    page.on('request',request=>{if(request.url()==='https://planton361.github.io/hyperskill-projects/portfolio/current.json'||request.url().startsWith('https://raw.githubusercontent.com/Planton361/hyperskill-projects/'))anonymous.push(request);});
    await page.goto(PAGE,{waitUntil:'domcontentloaded',timeout:30000});
@@ -26,7 +26,7 @@ const readerSource=fs.readFileSync(path.join(__dirname,'../../src/supplements/hy
       const stream=response.body.getReader(),chunks=[];let size=0;
       for(;;){const item=await stream.read();if(item.done)break;size+=item.value.length;if(size>limit){await stream.cancel();throw Error('Size limit');}chunks.push(item.value);}
       const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
-      return {status:response.status,text:new TextDecoder('utf-8',{fatal:true}).decode(bytes)};
+      return {status:response.status,text:new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),sha256:await r.digest(bytes,crypto)};
      }finally{clearTimeout(timer);}
     }
     const pointer=await read(r.ENDPOINT,4096);
@@ -36,6 +36,7 @@ const readerSource=fs.readFileSync(path.join(__dirname,'../../src/supplements/hy
     if(store===p.revision)throw Error('Source and store commits must differ');
     const payload=await read(p.index_url,16*1024*1024);
     if(payload.status!==200)throw Error('Payload HTTP '+payload.status);
+    if(payload.sha256!==p.index_sha256)throw Error('Original payload byte digest mismatch');
     const checked=await r.validate(pointer.text,payload.text,crypto);
     return {origin:location.origin,status:'PRODUCTION_VERIFIED',source_revision:p.revision,store_revision:store,
      index_sha256:p.index_sha256,project_ids:checked.index.projects.map(p=>p.project_id),pointerText:pointer.text,payloadText:payload.text,payload_cors:'PASS'};

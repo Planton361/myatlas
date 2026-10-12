@@ -59,7 +59,9 @@ keine dauerhafte Drei-Projekte-Grenze im Aktivierungscheck.
 Der echte Smoke akzeptiert keine benutzerdefinierten URLs oder Zugangsdaten.
 Er verwendet den vorhandenen Browser-Wire-Vertrag und Web Crypto; unabhängige
 Git-Inventarvalidierung prüft zusätzlich Hashes, Rollen, Git-Blobs und Code-Links.
-Browser/Python müssen exakt dieselben kanonischen Bytes sehen; Änderung zwischen
+Der Browser prüft SHA-256 direkt über die ursprünglichen Streambytes; UTF-8
+mit BOM wird nicht normalisiert. Service Workers sind im frischen Probecontext
+gesperrt. Browser/Python müssen exakt dieselben kanonischen Bytes sehen; Änderung zwischen
 Abrufen erfordert einen vollständigen neuen Versuch. Source- und Store-SHA
 müssen verschieden sein. `--allow-missing` ist ausschließlich eine Vorabbeobachtung
 und wird niemals im Aktivierungsgate verwendet.
@@ -95,8 +97,8 @@ stage617    24edf473c9e97b7ccbb287464302a4bbf6ffadff33efdc265076b5ae6b51455e
 
 Bereits bestandene lokale Python-3.12-Abnahme: **113 Producer-Tests** mit
 `MYATLAS_ROOT`, einschließlich 30 Imports (33 Projekte am Ende, 12 verifiziert,
-keine Course-Records); **41 Sync-/Smoke-/Aktivierungs-Tests**, ergänzt um den
-neuen strengen CPU-Navigationsvertrag. Kein importierter Code wurde ausgeführt.
+keine Course-Records); **42 Sync-/Smoke-/Aktivierungs-Tests**, einschließlich des
+neuen strengen CPU-Navigationsvertrags. Kein importierter Code wurde ausgeführt.
 
 Prüfkommandos:
 
@@ -150,8 +152,16 @@ enthielt. Ursache war Test-/Edit-Parallelität, keine abgeschwächte Assertion;
 der komplette Lauf wird für den committeten endgültigen Kandidaten wiederholt.
 Ein erster Producer-Unittest-Aufruf ohne `MYATLAS_ROOT` scheiterte erwartbar am
 verbindlichen Reader-Paritätsnachweis; der vollständige Lauf setzt den exakten
-isolierten MyAtlas-Checkout. Terminale CI-Status und neue Review-SHAs gehören
-zum finalen PR-Bericht, nicht zu einer vorab erfundenen Freigabe.
+isolierten MyAtlas-Checkout. Der vollständige erneute Main-Kontext-Kandidatenlauf auf
+`def9de8a4eb6cca6d72e0dea33b5cc5d60d99328` bestand mit erhaltenem
+`GITHUB_SHA`, echter anonymer LeetCode-Quelle, drei Projekten, 32/12, allen
+Browser-/Release-/Geometriegates und deaktiviertem Deployment.
+[Ergebnis](acceptance/phase6-pages-candidate.json). Die Producer-PR-CI
+[38249019431](https://github.com/Planton361/hyperskill-projects/actions/runs/38249019431)
+ist samt aller sechs Matrixszenarien grün; der Class-C-Main-Lauf
+[38247080718](https://github.com/Planton361/hyperskill-projects/actions/runs/38247080718)
+ebenfalls. Terminale Aktivierungs-Draft-CI und jeweils neueste Review-SHAs
+werden im PR-Bericht geführt. Seine fehlende echte Indexfreigabe bleibt BLOCKED.
 
 ## Branchschutz und verbleibende Risiken
 
