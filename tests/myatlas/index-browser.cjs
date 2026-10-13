@@ -17,13 +17,19 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   await context.route(s.reader.ENDPOINT,route=>{requests++;return route.fulfill(missing?{status:404,body:'not published'}:{status:200,contentType:'application/json',body:pair.pointerText});});
   await context.route('https://raw.githubusercontent.com/Planton361/hyperskill-projects/**',route=>route.fulfill({status:200,contentType:'application/json',body:pair.payloadText}));
   await context.addInitScript(()=>{addEventListener('unhandledrejection',event=>console.error('Index test unhandled rejection',location.href,String(event.reason)));addEventListener('error',event=>console.error('Index test window error',location.href,event.message,event.filename));});
-  const page=await context.newPage();page.on('console',message=>{if(message.type()==='error'&&message.text().startsWith('Index test '))console.error(engineName,width,phase,message.text());});page.on('pageerror',error=>{errors.push(error.message);console.error(engineName,width,phase,error.message,error.stack);});
+  const page=await context.newPage();await page.clock.install();page.on('console',message=>{if(message.type()==='error'&&message.text().startsWith('Index test '))console.error(engineName,width,phase,message.text());});page.on('pageerror',error=>{errors.push(error.message);console.error(engineName,width,phase,error.message,error.stack);});
   const state=()=>page.evaluate(()=>{const s=HyperskillPortfolio.state();return {status:s.status,revision:s.revision,count:s.snapshot.register.completed_project_count,learned:s.snapshot.analytics.global().learned,verified:s.snapshot.analytics.global().verified,ids:s.snapshot.register.completed_project_ids,course:s.snapshot.completion.course_completion};});
   async function go(query=''){phase='go '+query;await page.goto(base+query);await page.waitForFunction(()=>window.AtlasShell?.state().activeFrame?.contentWindow.AtlasV6?.state().L||window.AtlasShell?.state().activeFrame?.contentWindow.ScopeApp?.state().L);await page.waitForFunction(()=>window.HyperskillPortfolio?.state());await viewReady();}
   async function viewReady(){await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow,r=w?.AtlasV6?.state().renderer;return w?.HyperskillView?.state()?.snapshot===HyperskillPortfolio.state()?.snapshot&&(!r?.worker||r.workerReady);});}
   async function geometry(){return page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow,L=(w.AtlasV6||w.ScopeApp).state().L;return JSON.stringify([L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.lines]),L.connectorSegments,L.trays,L.checkpoint]);});}
   await go('?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state().status==='unavailable');assert.deepEqual((await state()).ids,fallbackRegister.completed_project_ids);assert.equal((await state()).count,fallbackRegister.completed_project_count);assert.equal((await state()).learned,s.candidate.global.learned);assert.equal((await state()).verified,12);assert.deepEqual((await state()).course,s.candidate.course_completion);
-  await page.locator('#hyperskill-portfolio summary').click();assert.match(await page.locator('#hyperskill-portfolio').innerText(),/unavailable.*Update unavailable/s);
+  assert.equal(await page.locator('#application-header #hyperskill-portfolio-control').count(),1);
+  assert.equal(await page.locator('#view-content > #hyperskill-portfolio').count(),0);
+  assert.equal(await page.locator('#hyperskill-portfolio').getAttribute('open'),null);
+  assert.equal(await page.locator('#hyperskill-portfolio-notice').isVisible(),true);
+  assert.match(await page.locator('#hyperskill-portfolio-notice').innerText(),/vorhandene.*Stand bleibt erhalten/s);
+  await page.locator('#hyperskill-portfolio summary').click();
+  assert.equal(await page.locator('#hyperskill-portfolio-notice').isVisible(),true);
   // Keep the actual candidate fallback check above. The immutable geometry
   // and data-only update exercise starts from the exact accepted static baseline,
   // as in geometry-browser.cjs, even when the outer app candidate has grown.
@@ -36,9 +42,14 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   // place. No navigation reload, app build or fixture mutation of progress.json.
   await go('?view=skill-tree');await page.locator('#hyperskill-portfolio summary').click();missing=false;await page.evaluate(()=>HyperskillPortfolio.refresh());
   assert.equal((await state()).status,'current');const original=await geometry();
+  assert.equal(await page.locator('#hyperskill-portfolio-notice').isVisible(),false);
+  await page.locator('#hyperskill-portfolio summary').click();
+  assert.equal(await page.locator('#hyperskill-portfolio').getAttribute('open'),null);
   for(let i=1;i<pairs.length;i++){
    phase='add '+i;pair=pairs[i];await page.evaluate(()=>HyperskillPortfolio.refresh());
    const now=await state();assert.equal(now.count,3+i);assert.equal(now.verified,12);assert.deepEqual(now.course,s.baseline.course_completion);assert.equal(now.revision,JSON.parse(pair.pointerText).revision);
+   assert.equal(await page.locator('#hyperskill-portfolio summary').innerText(),'Meine Projekte · '+now.count);
+   assert.equal(await page.locator('#hyperskill-portfolio').getAttribute('open'),null);
    assert.equal(await geometry(),original);
    await page.waitForFunction(count=>AtlasShell.state().activeFrame.contentWindow.PublicProgress?.completed_project_count===count,now.count);
    await page.waitForFunction(count=>{const w=AtlasShell.state().activeFrame.contentWindow;return w.SkillProgress&&w.document.querySelector('#progress-overview .overview-metric:nth-child(2) b').textContent===String(count);},now.count);
@@ -49,6 +60,9 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
    assert.equal(await page.locator('#hyperskill-portfolio img').count(),0);assert.match(await entries.last().innerText(),/Synthetic/);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   }
+  const beforeAutomatic=requests;await page.clock.fastForward(300100);
+  await page.waitForFunction(()=>HyperskillPortfolio.state().status==='current');assert(requests>beforeAutomatic,'Closed portfolio must keep its automatic refresh');
+  assert.equal(await page.locator('#hyperskill-portfolio').getAttribute('open'),null);
   assert((await state()).learned>32);
   await page.evaluate(()=>AtlasShell.navigate({view:'atlas',project:String(window.HyperskillPortfolio.state().snapshot.portfolio.find(p=>p.archive_schema===4&&p.requirements_state==='KNOWN').project_id)}));
   await page.waitForFunction(()=>AtlasShell.state().activeFrame?.contentWindow.ScopeApp?.state().L&&!AtlasShell.state().activeFrame.contentWindow.ScopeApp.state().busy);
@@ -61,7 +75,9 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   assert.equal(await page.locator(`[data-project-id="${s.empty}"]`).getAttribute('data-mapping'),'KNOWN_EMPTY');
   assert.equal(await page.locator('#project-choice option[value="'+s.unmapped+'"]').count(),0);
   const revision=(await state()).revision,count=(await state()).count;
-  missing=true;await page.evaluate(()=>HyperskillPortfolio.refresh());assert.equal((await state()).status,'stale');assert.equal((await state()).revision,revision);assert.equal((await state()).count,count);
+  missing=true;await page.evaluate(()=>HyperskillPortfolio.refresh());assert.equal((await state()).status,'stale');
+  assert.equal(await page.locator('#hyperskill-portfolio-notice').isVisible(),true);
+  assert.match(await page.locator('#hyperskill-portfolio-notice').innerText(),/letzte geprüfte Stand/);assert.equal((await state()).revision,revision);assert.equal((await state()).count,count);
   // Revisiting uses a fully revalidated cache, with no empty reset offline.
   phase='cache reload';await page.reload();await page.waitForFunction(()=>HyperskillPortfolio.state()?.status==='stale');assert.equal((await state()).count,count);
   await page.waitForFunction(()=>AtlasShell.state().activeFrame?.contentWindow.SkillProgress);
@@ -75,7 +91,17 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
    try{await page.waitForFunction(expected=>AtlasShell.state().activeFrame.contentWindow.PublicProgress?.completed_project_count===expected,count);}catch(error){console.error({name,state:await state(),frame:await page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow;return {publicCount:w.PublicProgress?.completed_project_count,error:w.document.querySelector('#error')?.textContent,source:w.PublicProgress?.source};}),errors});throw error;}
   }
   phase='final personal';await page.goto(base+'?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state()?.status==='current'&&AtlasShell.state().activeFrame?.contentWindow.SkillProgress);
-  await page.locator('#hyperskill-portfolio summary').click();await page.screenshot({path:path.join(s.root,`test-results/index-${engineName}-${width}.png`)});
+  await page.locator('#hyperskill-portfolio summary').click();
+  const normalText=await page.locator('#hyperskill-portfolio').innerText();
+  assert(!normalText.includes((await state()).revision));assert(!/Learned Topic IDs|independently verified|Update:|UNMAPPED|KNOWN_EMPTY/.test(normalText));
+  assert.equal(await page.locator('#hyperskill-portfolio [data-learned-topics]').count(),0);
+  const boxes=await page.locator('#hyperskill-portfolio summary, #application-nav a').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};}));
+  assert(boxes.every(b=>b.left>=0&&b.right<=width&&b.top>=0),'Navigation controls must fit viewport');
+  for(let a=0;a<boxes.length;a++)for(let b=a+1;b<boxes.length;b++)assert(boxes[a].right<=boxes[b].left||boxes[b].right<=boxes[a].left||boxes[a].bottom<=boxes[b].top||boxes[b].bottom<=boxes[a].top,'Navigation controls must not overlap');
+  const panelBox=await page.locator('#hyperskill-portfolio .project-list').boundingBox();assert(panelBox.x>=0&&panelBox.x+panelBox.width<=width);
+  await page.screenshot({path:path.join(s.root,`test-results/index-${engineName}-${width}.png`)});
+  await page.keyboard.press('Escape');assert.equal(await page.locator('#hyperskill-portfolio').getAttribute('open'),null);
+  assert.equal(await page.locator('#hyperskill-portfolio summary').evaluate(x=>x===document.activeElement),true);
   assert.deepEqual(errors,[]);rows.push({engine:engineName,width,projects:count,revision,learned:(await state()).learned,verified:12,baseline_geometry_unchanged:true,requests});await context.close();
  }}finally{await browser.close();}
 }

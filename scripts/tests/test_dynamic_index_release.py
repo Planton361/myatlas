@@ -51,6 +51,22 @@ class DynamicIndexReleaseTests(unittest.TestCase):
                 with self.assertRaises(ValueError):self.verify()
                 self.mutate(name,raw)
 
+    def test_portfolio_tampering_rejected_even_with_matching_inventory(self):
+        for name in ['hyperskill-index/portfolio.js','hyperskill-index/portfolio.css']:
+            with self.subTest(name=name):
+                raw=(self.site/name).read_bytes()
+                self.mutate(name,raw+b'\n/* unauthorized */\n')
+                with self.assertRaisesRegex(ValueError,'Changed dynamic index asset'):self.verify()
+                self.mutate(name,raw)
+
+    def test_portfolio_presentation_provenance_is_independently_required(self):
+        from scripts.knowledge_atlas.dynamic_index_release import PORTFOLIO, PORTFOLIO_SHA
+        runtime=json.loads((self.site/'runtime-manifest.json').read_bytes())
+        self.assertEqual(runtime['hyperskill_portfolio_release'],dict(manifest=PORTFOLIO,sha256=PORTFOLIO_SHA))
+        runtime['hyperskill_portfolio_release']['sha256']='0'*64
+        (self.site/'runtime-manifest.json').write_text(json.dumps(runtime))
+        with self.assertRaisesRegex(ValueError,'Missing portfolio presentation provenance'):self.verify()
+
     def test_geometry_tampering_still_reaches_frozen_guard(self):
         name='views/knowledge-atlas-v6-skill-tree/layout.js'
         self.mutate(name,(self.site/name).read_bytes()+b'\n// changed geometry\n')
