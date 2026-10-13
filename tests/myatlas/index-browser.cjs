@@ -60,7 +60,12 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
    await page.locator('#hyperskill-portfolio summary').click();
    assert.equal(await entries.last().isVisible(),true);
    assert.equal(await page.locator('#hyperskill-portfolio img').count(),0);assert.match(await entries.last().innerText(),/Synthetic/);
-   assert.match(await entries.last().innerText(),/java, python, kotlin/);
+   for(const project of JSON.parse(pair.payloadText).projects){
+    const entry=page.locator('#hyperskill-portfolio li[data-project-id="'+project.project_id+'"]');
+    assert.equal(await entry.locator('span').innerText(),project.title);
+    assert.equal(await entry.locator('small').count(),project.languages?.length?1:0);
+    if(project.languages?.length)assert.equal(await entry.locator('small').innerText(),project.languages.join(', '));
+   }
    await page.locator('#hyperskill-portfolio summary').click();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   }
