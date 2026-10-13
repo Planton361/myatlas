@@ -1,0 +1,28 @@
+/* Versioned presentation only. Atlas membership, layout and data stay unchanged. */
+#hyperskill-portfolio-control { margin-inline-start: auto; position: relative; flex: none; }
+#hyperskill-portfolio summary { display: flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid #425669; border-radius: 4px; color: #b7c7d5; font-size: 12px; white-space: nowrap; cursor: pointer; list-style: none; }
+#hyperskill-portfolio summary::-webkit-details-marker { display: none; }
+#hyperskill-portfolio summary:hover, #hyperskill-portfolio[open] summary { color: #dbe4ed; background: #171f27; }
+#hyperskill-portfolio summary:focus-visible, #hyperskill-portfolio a:focus-visible { outline: 2px solid #b7b0d9; outline-offset: 2px; }
+#hyperskill-portfolio .project-list { position: absolute; top: 38px; right: 0; width: min(340px, calc(100vw - 24px)); max-height: min(65dvh, 480px); overflow: auto; padding: 8px 14px; background: #171f27; border: 1px solid #425669; border-radius: 6px; box-shadow: 0 8px 24px #0005; color: #dbe4ed; overflow-wrap: anywhere; }
+#hyperskill-portfolio ul { list-style: none; margin: 0; padding: 0; }
+#hyperskill-portfolio li { padding: 10px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; font-size: 13px; }
+#hyperskill-portfolio li + li { border-top: 1px solid #425669; }
+#hyperskill-portfolio li > span { grid-column: 1; }
+#hyperskill-portfolio small { grid-column: 1; color: #96a9b9; font-size: 11px; }
+#hyperskill-portfolio a { grid-column: 2; grid-row: 1 / span 2; color: #a6d5ff; font-size: 12px; white-space: nowrap; }
+#hyperskill-portfolio-notice, #hyperskill-index-error { position: absolute; top: 38px; right: 0; width: min(340px, calc(100vw - 24px)); margin: 0; padding: 8px 12px; border: 1px solid #9c8455; border-radius: 5px; background: #24221c; color: #e5d3b0; font-size: 12px; line-height: 1.45; }
+#hyperskill-portfolio-notice[hidden] { display: none; }
+#hyperskill-portfolio[open] #hyperskill-portfolio-notice { position: static; width: auto; margin: 0 0 8px; }
+#hyperskill-index-error { top: 44px; right: 12px; }
+@media(max-width:680px) {
+ body.has-hyperskill-portfolio #application-header { height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 32px 32px; gap: 2px 8px; padding: 4px 12px; }
+ body.has-hyperskill-portfolio #application-header h1 { width: auto; font-size: 14px; }
+ body.has-hyperskill-portfolio #application-nav { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+ body.has-hyperskill-portfolio #application-nav a { flex: 1; width: auto; }
+ body.has-hyperskill-portfolio #hyperskill-portfolio-control { grid-column: 2; grid-row: 1; }
+ body.has-hyperskill-portfolio #view-content { height: calc(100dvh - 76px); }
+ #hyperskill-portfolio .project-list { top: 70px; }
+ #hyperskill-portfolio summary { font-size: 11px; padding: 0 8px; }
+ #hyperskill-portfolio-notice { top: 70px; }
+}

@@ -10,6 +10,8 @@ from .external_release import inventory
 from .navigation_release import transform as navigation_transform
 from .presentation_release import transform as presentation_transform, verify_presentation
 
+PORTFOLIO = 'docs/releases/myatlas-hyperskill-portfolio-v2.json'
+PORTFOLIO_SHA = '978262172fea1b529b494e578db6bedbcfb1f3d071b32d9f7690cc892e08004d'
 MANIFEST = 'docs/releases/myatlas-hyperskill-index-v1.json'
 ACTIVATION = 'docs/releases/myatlas-hyperskill-index-activation-v1.json'
 ACTIVATION_SHA = '5c01912d54af5fd6dc783710250b9abbc3de1b38b16fe2b04814ac23223c2323'
@@ -71,7 +73,23 @@ def release_selection(root):
 
 def release_assets(root, value):
     attestation, config = release_selection(root)
-    return attestation, {**value['assets'], 'hyperskill-index/config.json':config}
+    assets = {**value['assets'], 'hyperskill-index/config.json':config}
+    path = root/PORTFOLIO
+    if not path.exists():
+        require(not subprocess.check_output(['git','-C',str(root),'ls-tree','HEAD','--',PORTFOLIO]), 'Uncommitted removal of portfolio presentation')
+        return attestation, assets, None
+    raw = path.read_bytes()
+    require(sha(raw) == PORTFOLIO_SHA, 'Unreviewed portfolio presentation')
+    presentation = json.loads(raw)
+    replacements = {f'hyperskill-index/portfolio.{suffix}':f'src/supplements/hyperskill-portfolio-v2/portfolio.{suffix}' for suffix in ('js','css')}
+    require(set(presentation) == {'schema','version','base_manifest','base_sha256','assets','sources'} and presentation['schema'] == 1 and presentation['version'] == 'hyperskill-portfolio-v2' and presentation['base_manifest'] == MANIFEST and presentation['base_sha256'] == REVIEWED_SHA and presentation['assets'] == replacements and set(presentation['sources']) == set(replacements.values()), 'Invalid portfolio presentation contract')
+    for name in (PORTFOLIO, *presentation['sources']):
+        source = root/name
+        require(not any(p.is_symlink() for p in [source,*source.parents]) and source.read_bytes() == subprocess.check_output(['git','-C',str(root),'show','HEAD:'+name]), 'Uncommitted portfolio input: '+name)
+        require(subprocess.check_output(['git','-C',str(root),'ls-tree','HEAD','--',name]).split(b'\t')[0].split()[:2] == [b'100644',b'blob'], 'Nonregular portfolio input')
+    for name,digest in presentation['sources'].items():
+        require(sha((root/name).read_bytes()) == digest, 'Changed portfolio source: '+name)
+    return attestation, {**assets,**replacements}, dict(manifest=PORTFOLIO,sha256=PORTFOLIO_SHA)
 
 
 def transform(root, name, edit):
@@ -90,10 +108,11 @@ def transform(root, name, edit):
 def verify_dynamic(root, site, evidence_root, ref='HEAD'):
     root, site = Path(root).resolve(), Path(site).resolve()
     value = approved(root)
-    attestation, assets = release_assets(root, value)
+    attestation, assets, presentation = release_assets(root, value)
     actual = inventory(site)
     runtime = json.loads((site/'runtime-manifest.json').read_bytes())
     require(runtime.get('dynamic_index_release') == attestation, 'Missing dynamic index provenance')
+    require(runtime.get('hyperskill_portfolio_release') == presentation, 'Missing portfolio presentation provenance')
     require(runtime['inventory'] == {p:s for p,s in actual.items() if p!='runtime-manifest.json'}, 'Dynamic index inventory mismatch')
     with tempfile.TemporaryDirectory(prefix='myatlas-dynamic-check-') as folder:
         canonical = Path(folder)/'knowledge-map'
@@ -109,6 +128,8 @@ def verify_dynamic(root, site, evidence_root, ref='HEAD'):
             (canonical/name).write_bytes(baseline(root,name))
             runtime['inventory'][name] = edit['before']
         del runtime['dynamic_index_release']
+        if presentation is not None:
+            del runtime['hyperskill_portfolio_release']
         (canonical/'runtime-manifest.json').write_text(json.dumps(runtime,sort_keys=True,indent=2)+'\n')
         result = verify_presentation(root,canonical,evidence_root,ref)
     return {**result,'dynamic_index_release':attestation['sha256'],'dynamic_index_enabled':attestation['production_enabled']}
@@ -118,7 +139,7 @@ def apply_dynamic(root, site, evidence_root, ref='HEAD'):
     root, site = Path(root).resolve(), Path(site).resolve()
     require(root/'build' in site.parents and not any(p.is_symlink() for p in [site,*site.parents]), 'Unsafe dynamic index destination')
     value = approved(root)
-    attestation, assets = release_assets(root, value)
+    attestation, assets, presentation = release_assets(root, value)
     verify_presentation(root,site,evidence_root,ref)
     edits = {name:transform(root,name,edit) for name,edit in value['edits'].items()}
     for name, edit in value['edits'].items():
@@ -132,5 +153,7 @@ def apply_dynamic(root, site, evidence_root, ref='HEAD'):
     for name, raw in edits.items():
         (site/name).write_bytes(raw);runtime['inventory'][name]=sha(raw)
     runtime['dynamic_index_release']=attestation
+    if presentation is not None:
+        runtime['hyperskill_portfolio_release']=presentation
     (site/'runtime-manifest.json').write_text(json.dumps(runtime,sort_keys=True,indent=2)+'\n')
     return verify_dynamic(root,site,evidence_root,ref)
