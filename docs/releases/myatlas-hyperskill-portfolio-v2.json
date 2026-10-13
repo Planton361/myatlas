@@ -7,8 +7,8 @@
   "base_sha256": "03666d1be1b6657f1ed00acf480bd02ae83498ab3fd2ea490af8c2770c16edef",
   "schema": 1,
   "sources": {
-    "src/supplements/hyperskill-portfolio-v2/portfolio.css": "67fed0b1156aa53189d8b626accc0f2f5c6ec5d7898698175eafe682d2c7ed7e",
-    "src/supplements/hyperskill-portfolio-v2/portfolio.js": "68b3a1c664d76ddbe4ee0cf516250ce00b6c13b8149ef25e2447d0ddfe09b507"
+    "src/supplements/hyperskill-portfolio-v2/portfolio.css": "369d95b7bde799f183daa6c12710f5a31e523f90e49fac5e5b43fee404071473",
+    "src/supplements/hyperskill-portfolio-v2/portfolio.js": "909f75cb5db2fef003a5750ec4036a2de932c12c2e34b761c6a7733aafe7c34e"
   },
   "version": "hyperskill-portfolio-v2"
 }

@@ -27,7 +27,7 @@ try{
   const text=(tag,value)=>{const node=document.createElement(tag);node.textContent=value;return node;};
   summary.textContent=`Meine Projekte · ${snapshot.register.completed_project_count}`;
   panel.dataset.status=state.status;panel.dataset.revision=state.revision;
-  notice.hidden=state.status==='current';
+  notice.hidden=!state.error;
   notice.textContent=state.status==='stale'
    ? 'Projektliste nicht aktuell. Der letzte geprüfte Stand bleibt erhalten.'
    : 'Projektliste konnte nicht aktualisiert werden. Der vorhandene Stand bleibt erhalten.';

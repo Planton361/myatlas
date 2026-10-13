@@ -11,7 +11,7 @@ from .navigation_release import transform as navigation_transform
 from .presentation_release import transform as presentation_transform, verify_presentation
 
 PORTFOLIO = 'docs/releases/myatlas-hyperskill-portfolio-v2.json'
-PORTFOLIO_SHA = '857c4761d9f208baee8abfa527351ccd3ef7be981849012cd9bfa09b3392d605'
+PORTFOLIO_SHA = '978262172fea1b529b494e578db6bedbcfb1f3d071b32d9f7690cc892e08004d'
 MANIFEST = 'docs/releases/myatlas-hyperskill-index-v1.json'
 ACTIVATION = 'docs/releases/myatlas-hyperskill-index-activation-v1.json'
 ACTIVATION_SHA = '5c01912d54af5fd6dc783710250b9abbc3de1b38b16fe2b04814ac23223c2323'

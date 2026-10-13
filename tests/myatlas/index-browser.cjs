@@ -22,7 +22,7 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
   async function go(query=''){phase='go '+query;await page.goto(base+query);await page.waitForFunction(()=>window.AtlasShell?.state().activeFrame?.contentWindow.AtlasV6?.state().L||window.AtlasShell?.state().activeFrame?.contentWindow.ScopeApp?.state().L);await page.waitForFunction(()=>window.HyperskillPortfolio?.state());await viewReady();}
   async function viewReady(){await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow,r=w?.AtlasV6?.state().renderer;return w?.HyperskillView?.state()?.snapshot===HyperskillPortfolio.state()?.snapshot&&(!r?.worker||r.workerReady);});}
   async function geometry(){return page.evaluate(()=>{const w=AtlasShell.state().activeFrame.contentWindow,L=(w.AtlasV6||w.ScopeApp).state().L;return JSON.stringify([L.nodes.map(n=>[n.key,n.x,n.y,n.width,n.height,n.lines]),L.connectorSegments,L.trays,L.checkpoint]);});}
-  await go('?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state().status==='unavailable');assert.deepEqual((await state()).ids,fallbackRegister.completed_project_ids);assert.equal((await state()).count,fallbackRegister.completed_project_count);assert.equal((await state()).learned,s.candidate.global.learned);assert.equal((await state()).verified,12);assert.deepEqual((await state()).course,s.candidate.course_completion);
+  await go('?view=skill-tree');await page.waitForFunction(()=>HyperskillPortfolio.state().status==='unavailable'&&HyperskillPortfolio.state().error);assert.deepEqual((await state()).ids,fallbackRegister.completed_project_ids);assert.equal((await state()).count,fallbackRegister.completed_project_count);assert.equal((await state()).learned,s.candidate.global.learned);assert.equal((await state()).verified,12);assert.deepEqual((await state()).course,s.candidate.course_completion);
   assert.equal(await page.locator('#application-header #hyperskill-portfolio-control').count(),1);
   assert.equal(await page.locator('#view-content > #hyperskill-portfolio').count(),0);
   assert.equal(await page.locator('#hyperskill-portfolio').getAttribute('open'),null);
@@ -57,7 +57,11 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
    const entries=page.locator('#hyperskill-portfolio li');assert.equal(await entries.count(),now.count);
    const links=await entries.locator('a').evaluateAll(xs=>xs.map(a=>({url:a.href,rel:a.rel,target:a.target})));
    assert.equal(links.length,now.count);assert(links.every(link=>link.url.startsWith('https://github.com/Planton361/hyperskill-projects/blob/'+now.revision+'/')&&link.rel==='noopener noreferrer'&&link.target==='_blank'));
+   await page.locator('#hyperskill-portfolio summary').click();
+   assert.equal(await entries.last().isVisible(),true);
    assert.equal(await page.locator('#hyperskill-portfolio img').count(),0);assert.match(await entries.last().innerText(),/Synthetic/);
+   assert.match(await entries.last().innerText(),/java, python, kotlin/);
+   await page.locator('#hyperskill-portfolio summary').click();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   }
   const beforeAutomatic=requests;await page.clock.fastForward(300100);

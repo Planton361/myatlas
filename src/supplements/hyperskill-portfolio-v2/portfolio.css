@@ -22,6 +22,7 @@
  body.has-hyperskill-portfolio #application-nav a { flex: 1; width: auto; }
  body.has-hyperskill-portfolio #hyperskill-portfolio-control { grid-column: 2; grid-row: 1; }
  body.has-hyperskill-portfolio #view-content { height: calc(100dvh - 76px); }
+ #hyperskill-portfolio .project-list { top: 70px; }
  #hyperskill-portfolio summary { font-size: 11px; padding: 0 8px; }
  #hyperskill-portfolio-notice { top: 70px; }
 }
