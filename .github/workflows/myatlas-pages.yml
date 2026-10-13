@@ -13,6 +13,53 @@ concurrency:
   group: myatlas-pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  activation-check:
+    # This read-only gate deliberately blocks the activation Draft before bootstrap.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: Planton361/hyperskill-projects
+          ref: main
+          path: build/evidence/hyperskill-projects
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test public smoke and reviewed activation/rollback contracts
+        run: python3 -B -m unittest scripts.tests.test_public_index_smoke scripts.tests.test_activation_release
+      - name: Install locked anonymous browser smoke tooling
+        run: |
+          npm ci --prefix scripts/knowledge_atlas --ignore-scripts
+          scripts/knowledge_atlas/node_modules/.bin/playwright install --with-deps chromium webkit
+      - name: Require actual producer HTTPS and public-origin CORS before activation
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys
+          from pathlib import Path
+          from scripts.knowledge_atlas.dynamic_index_release import approved, release_selection
+          root=Path.cwd(); approved(root)
+          release,_=release_selection(root)
+          if release['production_enabled']:
+              subprocess.run([sys.executable,'-B','scripts/check-public-project-index.py','--evidence-root','build/evidence/hyperskill-projects','--expect-current'],check=True)
+          else:
+              print('Reader disabled: static sync retained; no bootstrap or activation requested')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-index-activation-preflight
+          path: test-results/public-index-smoke.json
   project-check:
     runs-on: ubuntu-24.04
     permissions:
@@ -115,7 +162,7 @@ jobs:
           path: build/pages
   deploy:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
-    needs: build
+    needs: [build, activation-check]
     runs-on: ubuntu-24.04
     permissions:
       pages: write
@@ -136,7 +183,7 @@ jobs:
         uses: actions/deploy-pages@v4
   sync-report:
     if: always()
-    needs: [project-check, build, deploy]
+    needs: [project-check, build, activation-check, deploy]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4

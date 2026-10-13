@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "deployment": "disabled",
+  "github_ref": "refs/heads/main",
+  "public_progress_mode": "anonymous-live",
+  "evidence_commit": "c221999109d3502f448bb313691e35b3b7e0d143",
+  "application_commit": "def9de8a4eb6cca6d72e0dea33b5cc5d60d99328",
+  "completed_project_ids": [
+    113,
+    229,
+    380
+  ],
+  "learned": 32,
+  "verified": 12,
+  "newly_learned_topic_ids": [
+    518
+  ]
+}

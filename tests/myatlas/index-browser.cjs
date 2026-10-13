@@ -12,9 +12,8 @@ const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
  const browser=await engine.launch({headless:true});try{for(const width of [1440,390]){
   const context=await browser.newContext({viewport:{width,height:width===390?844:1000}}),errors=[];
   let pair=pairs[0],missing=true,requests=0,phase='boot';
-  // The packaged, pinned production flag stays false. Only this isolated HTTP
-  // fixture opts in, without GitHub variables, URL parameters or real endpoint.
-  await context.route('**/hyperskill-index/config.json',async route=>{const response=await route.fetch();const config=await response.json();assert.equal(config.enabled,false);await route.fulfill({json:{...config,enabled:true}});});
+  // Check the selected reviewed release flag; isolated HTTP fixtures supply data.
+  await context.route('**/hyperskill-index/config.json',async route=>{const response=await route.fetch();const config=await response.json();const active=fs.existsSync(path.join(s.root,'docs/releases/myatlas-hyperskill-index-activation-v1.json'));assert.equal(config.enabled,active);await route.fulfill({json:{...config,enabled:true}});});
   await context.route(s.reader.ENDPOINT,route=>{requests++;return route.fulfill(missing?{status:404,body:'not published'}:{status:200,contentType:'application/json',body:pair.pointerText});});
   await context.route('https://raw.githubusercontent.com/Planton361/hyperskill-projects/**',route=>route.fulfill({status:200,contentType:'application/json',body:pair.payloadText}));
   await context.addInitScript(()=>{addEventListener('unhandledrejection',event=>console.error('Index test unhandled rejection',location.href,String(event.reason)));addEventListener('error',event=>console.error('Index test window error',location.href,event.message,event.filename));});

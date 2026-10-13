@@ -14,16 +14,18 @@ RELEASE='docs/releases/myatlas-hyperskill-index-v1.json'
 
 
 def activation_proven(root, manifest, read):
-    config_raw=git(root,'show','HEAD:'+CONFIG)
+    from .dynamic_index_release import release_selection
+    selected, config_source = release_selection(root)
+    config_raw=git(root,'show','HEAD:'+config_source)
     config=json.loads(config_raw)
     if config.get('enabled') is not True:
         return False
-    release_raw=git(root,'show','HEAD:'+RELEASE)
+    release_raw=git(root,'show','HEAD:'+selected['manifest'])
     release=json.loads(release_raw)
     if release.get('production_enabled') is not True:
         return False
     deployed=manifest.get('dynamic_index_release',{})
-    if deployed != dict(manifest=RELEASE,sha256=hashlib.sha256(release_raw).hexdigest(),production_enabled=True):
+    if deployed != dict(manifest=selected['manifest'],sha256=hashlib.sha256(release_raw).hexdigest(),production_enabled=True):
         return False
     asset='hyperskill-index/config.json'
     digest=hashlib.sha256(config_raw).hexdigest()

@@ -43,11 +43,11 @@ class ActivationProofTests(unittest.TestCase):
         manifest={'dynamic_index_release':dict(manifest=RELEASE,sha256=hashlib.sha256(release).hexdigest(),production_enabled=True),
                   'inventory':{'hyperskill-index/config.json':hashlib.sha256(config).hexdigest()}}
         def committed(_,*args):return config if args[-1]=='HEAD:'+CONFIG else release
-        with patch('scripts.knowledge_atlas.index_sync.git',side_effect=committed):
+        with patch('scripts.knowledge_atlas.dynamic_index_release.release_selection',return_value=(dict(manifest=RELEASE),CONFIG)),patch('scripts.knowledge_atlas.index_sync.git',side_effect=committed):
             self.assertTrue(activation_proven('.',manifest,lambda _:config))
             self.assertFalse(activation_proven('.',manifest,lambda _:b'{}'))
             self.assertFalse(activation_proven('.',{},lambda _:config))
-        with patch('scripts.knowledge_atlas.index_sync.git',return_value=b'{"enabled":false}'):
+        with patch('scripts.knowledge_atlas.dynamic_index_release.release_selection',return_value=(dict(manifest=RELEASE),CONFIG)),patch('scripts.knowledge_atlas.index_sync.git',return_value=b'{"enabled":false}'):
             self.assertFalse(activation_proven('.',manifest,lambda _:self.fail('Disabled config must not fetch activation proof')))
 
     def test_pointer_source_is_checked_before_payload_fetch(self):

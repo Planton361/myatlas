@@ -1,6 +1,7 @@
 /* Real public reads, disposable visitors; no progress mutations or publisher access. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||path.resolve(__dirname,'../../scripts/knowledge_atlas/node_modules/playwright'));
+const H=require('../../src/supplements/hyperskill-index-v1/reader.js');
 const R=require('../../src/leetcode-progress/loader.js'),workspace=path.resolve(process.argv[2]),phase=process.argv[3]||'after';
 const progressPath=path.resolve(__dirname,'../../build/pages/knowledge-map/progress.json'),progressBytes=fs.readFileSync(progressPath),progress=JSON.parse(progressBytes.toString('utf8'));
 const runtime=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../build/pages/knowledge-map/runtime-manifest.json'),'utf8'));
@@ -47,12 +48,21 @@ function upperBoxes(){
  const canvas=document.getElementById('world').getBoundingClientRect(),toolbar=document.getElementById('map-toolbar')?.getBoundingClientRect();
  return {boxes,collisions,overflow,documentOverflow:document.documentElement.scrollWidth>innerWidth,canvas:{top:canvas.top,height:canvas.height},toolbarClear:!toolbar||toolbar.bottom<=canvas.top+.5};
 }
+async function atlasReady(page){
+ await page.waitForFunction(()=>{const w=AtlasShell.state().activeFrame?.contentWindow,s=w?.AtlasV6?.state(),r=s?.renderer,p=window.HyperskillPortfolio;
+  return !!s?.L&&(!r?.worker||r.workerReady)&&w.document.fonts.status==='loaded'&&(!p?.enabled||w.HyperskillView?.state()?.snapshot===p.state()?.snapshot);});
+ assert(await page.evaluate(()=>!HyperskillPortfolio.enabled||HyperskillPortfolio.state().status==='unavailable'),'Invalid fixture must preserve unavailable fallback');
+}
 async function run(engine,name,options){
  const browser=await engine.launch({headless:true,...options});
  try{for(const width of widths){
   const context=await browser.newContext({viewport:{width,height:width===390?844:1000}}),page=await context.newPage(),errors=[],requests=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.status()>=400)errors.push('HTTP '+r.status()+' '+r.url());});
   await context.route('**/*',route=>{const q=route.request(),url=q.url();assert.equal(q.method(),'GET');assert.equal(q.headers().authorization,undefined);assert.equal(q.headers().cookie,undefined);
+   // Isolate only the fixed Hyperskill pointer for CPU-to-Atlas navigation.
+   // A malformed canonical pair preserves the exact validated static fallback;
+   // all other remote destinations remain forbidden. Real CORS is tested separately.
+   if(url===H.ENDPOINT)return route.fulfill({status:200,contentType:'application/json',body:'{}\n'});
    assert(new URL(url).origin===new URL(base).origin||url===R.URL,'Unexpected network destination');if(url===R.URL){requests.push({method:'GET',credentials:false});if(preRelease)return route.fulfill({contentType:'application/json',body:seed});}return route.continue();});
   await page.goto(base);await page.waitForFunction(()=>document.body.dataset.publicState==='published');await page.evaluate(()=>document.fonts.ready);
   const solvedCount=await page.evaluate(()=>MyAtlasPublicIntegration.state().value.resolved.length),publishedCount=await page.evaluate(()=>MyAtlasPublicIntegration.state().value.document.solved.length);
@@ -90,16 +100,16 @@ async function run(engine,name,options){
   if(width===1440){
    const cpuURL=page.url();await page.locator('#nav-atlas').click();
    await page.waitForFunction(()=>window.AtlasShell&&document.querySelector('#loading').hidden&&AtlasShell.state().activeFrame?.contentWindow.PublicProgress);
-   // PublicProgress precedes the accepted renderer's asynchronous worker script
-   // bootstrap. Finish that load before this test deliberately leaves the page.
-   await page.waitForLoadState('networkidle');
+   // Explicit renderer/snapshot readiness also covers the active supplement's
+   // retired worker loads, which can remain pending in browser networkidle.
+   await atlasReady(page);
    assert.deepEqual(await page.locator('#application-nav a').allTextContents(),['Atlas','My Skill Tree','LeetCode']);
    assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.learned),progress.global.learned);
    await page.goto(cpuURL);await page.waitForFunction(()=>document.body.dataset.publicState==='published');
    await page.waitForLoadState('networkidle');
    await page.locator('#nav-skill-tree').click();
    await page.waitForFunction(()=>window.AtlasShell&&document.querySelector('#loading').hidden&&AtlasShell.state().route.view==='skill-tree'&&AtlasShell.state().activeFrame?.contentWindow.PublicProgress);
-   await page.waitForLoadState('networkidle');
+   await atlasReady(page);
    assert.deepEqual(await page.locator('#application-nav a').allTextContents(),['Atlas','My Skill Tree','LeetCode']);
    assert.equal(await page.evaluate(()=>AtlasShell.state().activeFrame.contentWindow.PublicProgress.global.verified),progress.global.verified);
   }
