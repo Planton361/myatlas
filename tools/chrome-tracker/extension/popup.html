@@ -1,27 +1,137 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>MyAtlas local progress</title><link rel="stylesheet" href="popup.css"></head>
-<body><h1>MyAtlas · LeetCode</h1><p id="count">Loading…</p>
-<p id="current"></p><p id="candidate"></p>
-<button id="confirm" hidden>Confirm recent Accepted as solved</button>
-<button id="mark" disabled>Mark current problem solved</button>
-<p class="hint">Marking is your attestation. Accepted observations require confirmation. Public sync is optional.</p>
-<h2>Recently recorded</h2><ol id="recent"></ol>
-<details><summary>Correct any Problem</summary><label>Recorded Problem <select id="correction"></select></label><button id="remove" disabled>Undo selected solve</button></details>
-<div class="backup"><button id="export">Export progress JSON</button><label class="file">Choose progress JSON<input id="import" type="file" accept=".json,application/json"></label><button id="apply-import" hidden>Merge selected backup</button></div>
-<p class="hint">Import adds missing IDs and keeps existing records. Export regularly; uninstalling removes local storage.</p>
-<p id="publisher-status" role="status" aria-live="polite">Public sync disabled</p>
-<details><summary>Optional public GitHub sync</summary>
-<p class="hint">Publish confirmed IDs only to Planton361/myatlas/progress/leetcode/solved.json. Undo removes an ID from the current public file; Git history can retain earlier records.</p>
-<label>Fine-grained GitHub token <input id="publisher-token" type="password" autocomplete="off" spellcheck="false" maxlength="256"></label>
-<label>Separate vault passphrase (at least 16 characters) <input id="publisher-vault-passphrase" type="password" autocomplete="off" spellcheck="false" minlength="16" maxlength="256"></label>
-<p class="hint">Select only Planton361/myatlas with Contents read/write. Your token is encrypted with this passphrase before it is saved locally. Keep the passphrase in your password manager; do not reuse your GitHub password. No recovery is possible if it is lost, but you can set up a new token.</p>
-<button id="publisher-enable">Save encrypted token and enable sync</button>
-<div id="publisher-unlock-controls" hidden>
-  <label>Unlock saved GitHub token <input id="publisher-unlock-passphrase" type="password" autocomplete="off" spellcheck="false" maxlength="256"></label>
-  <p class="hint">After restarting Chrome, enter only your vault passphrase. The GitHub token remains encrypted on disk; it is unlocked for this browser session.</p>
-  <button id="publisher-unlock">Unlock saved token and sync</button>
-</div>
-<button id="sync-now" disabled>Sync Now</button><button id="publisher-disable">Disable and forget saved token</button>
-</details>
-<p id="message" role="status" aria-live="polite"></p>
-<script src="core.js"></script><script src="popup.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyAtlas LeetCode progress</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup" aria-labelledby="app-title">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <div class="brand-copy">
+          <p class="eyebrow">MYATLAS</p>
+          <h1 id="app-title">Tracker</h1>
+        </div>
+      </div>
+      <div class="solved-badge" id="solved-badge" aria-label="0 solved problems">
+        <strong id="count">…</strong>
+        <span>solved</span>
+      </div>
+    </header>
+
+    <section class="current-card" aria-labelledby="current-heading">
+      <div class="card-overline">
+        <p class="eyebrow" id="current-heading">Current page</p>
+        <span class="page-state" id="current-state">Waiting for a problem</span>
+      </div>
+      <h2 class="problem-title" id="current">Open a supported problem</h2>
+      <div class="problem-meta" id="current-meta" role="group" aria-label="Current problem details">Visit a problem page included in the tracker catalog.</div>
+      <div class="accepted-card" id="accepted-card" hidden>
+        <p class="accepted-label">Accepted detected</p>
+        <p class="candidate-copy" id="candidate"></p>
+        <button id="confirm" class="button button-primary" type="button" hidden>Confirm Accepted</button>
+      </div>
+      <button id="mark" class="button button-primary" type="button" disabled>Mark current problem solved</button>
+      <p class="helper attestation-note">Only your confirmation saves a solve. Accepted results always need review.</p>
+    </section>
+
+    <section class="recent-section" aria-labelledby="recent-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="recent-heading">Recently recorded</h2>
+          <p>Latest saves on this device</p>
+        </div>
+        <span class="recent-count" id="recent-count" aria-label="0 recent problems">0</span>
+      </div>
+      <ol id="recent" class="recent-list" aria-label="Recently recorded problems">
+        <li class="empty-state">No solves recorded yet.</li>
+      </ol>
+    </section>
+
+    <section class="secondary-tools" aria-label="More tracker options">
+      <details class="disclosure">
+        <summary>
+          <span class="summary-copy"><strong>Correct a solve</strong><small>Remove a saved problem</small></span>
+          <span class="chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="disclosure-body">
+          <label for="correction">Saved problem</label>
+          <select id="correction" aria-label="Problem to undo" disabled></select>
+          <button id="remove" class="button button-secondary" type="button" disabled>Undo selected solve</button>
+        </div>
+      </details>
+
+      <details class="disclosure">
+        <summary>
+          <span class="summary-copy"><strong>Backup &amp; restore</strong><small>Export a copy or merge a backup</small></span>
+          <span class="chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="disclosure-body">
+          <p class="helper">Merge adds missing solves and keeps the records already on this device.</p>
+          <div class="backup-actions">
+            <button id="export" class="button button-secondary" type="button">Export progress JSON</button>
+            <label class="file-picker" for="import">
+              <span>Choose progress JSON</span>
+              <input id="import" type="file" accept=".json,application/json" aria-label="Choose a progress JSON backup">
+            </label>
+          </div>
+          <button id="apply-import" class="button button-primary" type="button" hidden>Merge selected backup</button>
+        </div>
+      </details>
+
+      <details class="disclosure sync-disclosure" id="sync-details">
+        <summary>
+          <span class="summary-copy"><strong>Public sync</strong><small>Optional publishing to MyAtlas</small></span>
+          <span class="summary-status" id="publisher-summary">Sync is off</span>
+          <span class="chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="disclosure-body sync-body">
+          <div id="publisher-status" class="sync-status" data-state="disabled" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div class="status-copy">
+              <strong id="publisher-status-title">Sync is off</strong>
+              <p id="publisher-status-detail">Your progress stays on this device until you turn sync on.</p>
+            </div>
+          </div>
+          <p class="helper">Only confirmed problem IDs are published to the public MyAtlas progress file.</p>
+          <div class="publisher-actions">
+            <button id="sync-now" class="button button-secondary" type="button" disabled>Sync now</button>
+            <button id="publisher-disable" class="button button-quiet" type="button">Disable and forget saved token</button>
+          </div>
+
+          <details class="vault-disclosure">
+            <summary>
+              <span class="summary-copy"><strong>Token and passphrase</strong><small>Set up, replace, or unlock</small></span>
+              <span class="chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="vault-body">
+              <div id="publisher-unlock-controls" class="unlock-card" hidden>
+                <label for="publisher-unlock-passphrase">Vault passphrase</label>
+                <input id="publisher-unlock-passphrase" type="password" autocomplete="off" spellcheck="false" maxlength="256">
+                <p class="helper">Unlock your saved token for this Chrome session.</p>
+                <button id="publisher-unlock" class="button button-primary" type="button">Unlock saved token and sync</button>
+              </div>
+
+              <div class="setup-fields">
+                <label for="publisher-token">Fine-grained GitHub token</label>
+                <input id="publisher-token" type="password" autocomplete="off" spellcheck="false" maxlength="256">
+                <label for="publisher-vault-passphrase">Separate vault passphrase <span>(16 characters or more)</span></label>
+                <input id="publisher-vault-passphrase" type="password" autocomplete="off" spellcheck="false" minlength="16" maxlength="256">
+                <p class="helper">Your token is encrypted before it is saved. The passphrase is never saved; keep it in your password manager. You will need it again after restarting Chrome.</p>
+                <button id="publisher-enable" class="button button-primary" type="button">Save encrypted token and enable sync</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </details>
+    </section>
+
+    <p id="message" class="message" role="status" aria-live="polite" hidden></p>
+  </main>
+  <script src="core.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
