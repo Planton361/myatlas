@@ -11,7 +11,12 @@ async function run(action) { try { await action(); } catch (e) { notice(e.messag
 async function refresh() {
   state = await send({type: 'state'});
   const p=state.publisher;
-  if(p){$('publisher-status').textContent='Public sync: '+p.phase+' · '+p.pending+' pending'+(p.publishedAt?' · published '+p.publishedAt:'')+(p.nextRetryAt?' · retry '+new Date(p.nextRetryAt).toLocaleTimeString():'')+(p.error?' · '+p.error:'');$('sync-now').disabled=!p.enabled;}
+  if(p){
+    $('publisher-status').textContent='Public sync: '+p.phase+' · '+p.pending+' pending'+(p.publishedAt?' · published '+p.publishedAt:'')+(p.nextRetryAt?' · retry '+new Date(p.nextRetryAt).toLocaleTimeString():'')+(p.error?' · '+p.error:'');
+    $('sync-now').disabled=!p.enabled||!p.unlocked;
+    $('publisher-unlock-controls').hidden=!p.vaultSaved||!p.enabled||p.unlocked;
+    $('publisher-enable').textContent=p.vaultSaved?'Replace saved token and passphrase':'Save encrypted token and enable sync';
+  }
   $('count').textContent = state.records.length + ' solved';
   $('current').textContent = state.current ? state.current.problemId + ' · ' + state.current.slug : 'Open a catalogued leetcode.com/problems/ page.';
   $('mark').disabled = !state.current;
@@ -55,27 +60,36 @@ $('apply-import').onclick = () => run(async () => {
 });
 const publisherReloadMessage='The loaded tracker manifest is missing optional GitHub permissions. Open chrome://extensions and click Reload on this existing extension, then reopen the popup. Do not remove or reinstall it; local solved records will be retained.';
 $('publisher-enable').onclick=()=>{
-  const credential=$('publisher-token').value.trim();
+  const credential=$('publisher-token').value.trim(),passphrase=$('publisher-vault-passphrase').value;
   let permissionRequest;
   try{
     if(!credential)throw Error('Enter a repository-restricted fine-grained token.');
+    if(passphrase.length<16)throw Error('Choose a separate vault passphrase with at least 16 characters.');
     // Chrome caches an unpacked manifest until Reload, even while popup.js
     // changes on disk. Check Chrome's loaded manifest, not a fetched file.
     const manifest=chrome.runtime.getManifest();
     if(!manifest.optional_permissions?.includes('alarms')||!manifest.optional_host_permissions?.includes('https://api.github.com/*'))throw Error(publisherReloadMessage);
     // Keep the API call synchronous in the button handler, before any await.
     permissionRequest=chrome.permissions.request({permissions:['alarms'],origins:['https://api.github.com/*']});
-  }catch(e){$('publisher-token').value='';notice(e.message);return;}
+  }catch(e){$('publisher-token').value='';$('publisher-vault-passphrase').value='';notice(e.message);return;}
   run(async()=>{
     try{
       const allowed=await permissionRequest;
       if(!allowed){notice('Optional publisher permissions were declined. Publishing was not enabled by this attempt; local progress is unchanged.');return;}
-      await send({type:'publisher-enable',token:credential});await refresh();notice('Confirmed records queued for the public progress repository.');
+      await send({type:'publisher-enable',token:credential,passphrase});await refresh();notice('Encrypted token saved. Confirmed records queued for publication.');
     }catch(e){notice(e.message.includes('Only permissions specified in the manifest')?publisherReloadMessage:e.message);}
-    finally{$('publisher-token').value='';}
+    finally{$('publisher-token').value='';$('publisher-vault-passphrase').value='';}
   });
 };
+$('publisher-unlock').onclick=()=>run(async()=>{
+  const passphrase=$('publisher-unlock-passphrase').value;
+  $('publisher-unlock-passphrase').value='';
+  await send({type:'publisher-unlock',passphrase});await refresh();notice('Saved token unlocked for this Chrome session.');
+});
 $('sync-now').onclick=()=>run(async()=>{await send({type:'sync-now'});await refresh();});
-$('publisher-disable').onclick=()=>run(async()=>{await send({type:'publisher-disable'});$('publisher-token').value='';await refresh();notice('Publisher disabled and token forgotten. Pending corrections are retained locally.');});
+$('publisher-disable').onclick=()=>run(async()=>{await send({type:'publisher-disable'});
+  for(const id of ['publisher-token','publisher-vault-passphrase','publisher-unlock-passphrase'])$(id).value='';
+  await refresh();notice('Publisher disabled. Saved ciphertext and session token forgotten; pending corrections retained.');
+});
 chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&(changes.progress||changes.publisher))run(refresh);});
 run(refresh);
