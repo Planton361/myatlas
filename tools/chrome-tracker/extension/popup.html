@@ -12,10 +12,16 @@
 <p id="publisher-status" role="status" aria-live="polite">Public sync disabled</p>
 <details><summary>Optional public GitHub sync</summary>
 <p class="hint">Publish confirmed IDs only to Planton361/myatlas/progress/leetcode/solved.json. Undo removes an ID from the current public file; Git history can retain earlier records.</p>
-<label>Fine-grained token <input id="publisher-token" type="password" autocomplete="off" spellcheck="false" maxlength="256"></label>
-<p class="hint">Select only Planton361/myatlas with Contents read/write. Token stays in trusted extension session storage and must be re-entered after browser restart.</p>
-<button id="publisher-enable">Enable and publish confirmed records</button>
-<button id="sync-now" disabled>Sync Now</button><button id="publisher-disable">Disable and forget token</button>
+<label>Fine-grained GitHub token <input id="publisher-token" type="password" autocomplete="off" spellcheck="false" maxlength="256"></label>
+<label>Separate vault passphrase (at least 16 characters) <input id="publisher-vault-passphrase" type="password" autocomplete="off" spellcheck="false" minlength="16" maxlength="256"></label>
+<p class="hint">Select only Planton361/myatlas with Contents read/write. Your token is encrypted with this passphrase before it is saved locally. Keep the passphrase in your password manager; do not reuse your GitHub password. No recovery is possible if it is lost, but you can set up a new token.</p>
+<button id="publisher-enable">Save encrypted token and enable sync</button>
+<div id="publisher-unlock-controls" hidden>
+  <label>Unlock saved GitHub token <input id="publisher-unlock-passphrase" type="password" autocomplete="off" spellcheck="false" maxlength="256"></label>
+  <p class="hint">After restarting Chrome, enter only your vault passphrase. The GitHub token remains encrypted on disk; it is unlocked for this browser session.</p>
+  <button id="publisher-unlock">Unlock saved token and sync</button>
+</div>
+<button id="sync-now" disabled>Sync Now</button><button id="publisher-disable">Disable and forget saved token</button>
 </details>
 <p id="message" role="status" aria-live="polite"></p>
 <script src="core.js"></script><script src="popup.js"></script></body></html>
