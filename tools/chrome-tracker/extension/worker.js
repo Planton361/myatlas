@@ -1,5 +1,5 @@
-importScripts('core.js', 'public-schema.js', 'github-publisher.js');
-const C = MyAtlasTracker, KEY = 'progress';
+importScripts('core.js', 'public-schema.js', 'github-publisher.js', 'token-vault.js');
+const C = MyAtlasTracker, KEY = 'progress', VAULT = 'publisherTokenVaultV1';
 const PUBLIC_PERMISSION={permissions:['alarms'],origins:['https://api.github.com/*']},SYNC='publisher',TOKEN='publisherToken',ALARM='myatlas-public-retry';
 const emptySync=()=>({enabled:false,phase:'disabled',ops:[],attempts:0,nextRetryAt:null,publishedAt:null,publishedSHA:null,error:null});
 // Browser activation is authoritative even when a page's visibility/focus
@@ -26,7 +26,16 @@ async function syncState(ids){
   if(typeof s.enabled!=='boolean'||!Array.isArray(s.ops))throw Error('Invalid publisher state. Pending operations were not discarded.');
   MyAtlasPublicProgress.operations(s.ops,ids);return s;
 }
-function visibleSync(s,hasToken=false){return {enabled:s.enabled,phase:s.enabled&&!hasToken&&!['token-rejected','permission-required','blocked'].includes(s.phase)?'token-required':s.phase,pending:s.ops.length,attempts:s.attempts,nextRetryAt:s.nextRetryAt,publishedAt:s.publishedAt,error:s.error};}
+async function savedVault() {
+  const record = await chrome.storage.local.get(VAULT);
+  return record[VAULT] || null;
+}
+function visibleSync(s,hasToken=false,hasVault=false) {
+  const locked = s.enabled && !hasToken && !['token-rejected','permission-required','blocked'].includes(s.phase);
+  return {enabled:s.enabled,phase:locked?(hasVault?'unlock-required':'token-required'):s.phase,
+    pending:s.ops.length,attempts:s.attempts,nextRetryAt:s.nextRetryAt,publishedAt:s.publishedAt,
+    error:s.error,vaultSaved:hasVault,unlocked:hasToken};
+}
 async function token(){
   const data=await chrome.storage.session?.get([TOKEN,'publisherDestination']);
   // A token saved for the old repository must never be reused at a new endpoint.
@@ -61,18 +70,24 @@ async function syncNow(){
     const stopped={...s,phase:'permission-required',nextRetryAt:null,error:'Publisher permission is missing. Pending changes retained.'};await chrome.storage.local.set({[SYNC]:stopped});return visibleSync(stopped,Boolean(await token()));
   }
   const credential=await token();
-  if(!credential){const stopped={...s,phase:'token-required',nextRetryAt:null,error:'Re-enter the restricted token after browser restart.'};await chrome.storage.local.set({[SYNC]:stopped});await schedule(stopped);return visibleSync(stopped);}
+  if(!credential){
+    const stored=Boolean(await savedVault());
+    const stopped={...s,phase:stored?'unlock-required':'token-required',nextRetryAt:null,
+      error:stored?'Unlock the saved token with your passphrase to resume sync.':'Enter a new restricted fine-grained GitHub token.'};
+    await chrome.storage.local.set({[SYNC]:stopped});await schedule(stopped);
+    return visibleSync(stopped,false,stored);
+  }
   await chrome.storage.local.set({[SYNC]:{...s,phase:'publishing',error:null}});
   try{
     const published=await MyAtlasGitHubPublisher.create({ids}).publish(credential,s.ops);
     const done={...s,ops:[],phase:'published',attempts:0,nextRetryAt:null,publishedAt:published.value.updatedAt,publishedSHA:published.sha,error:null};
-    await chrome.storage.local.set({[SYNC]:done});await schedule(done);return visibleSync(done,true);
+    await chrome.storage.local.set({[SYNC]:done});await schedule(done);return visibleSync(done,true,Boolean(await savedVault()));
   }catch(e){
     const attempts=(s.attempts||0)+1,temporary=e.kind==='temporary';
     const retry=temporary&&attempts<=6?Date.now()+Math.max(e.retryAfter||0,60000*2**(attempts-1)):null;
     const stopped={...s,phase:temporary?(retry?'pending':'retry-paused'):e.kind==='auth'?'token-rejected':'blocked',attempts,nextRetryAt:retry,error:e.message};
     if(e.kind==='auth')await chrome.storage.session.remove(TOKEN);
-    await chrome.storage.local.set({[SYNC]:stopped});await schedule(stopped);return visibleSync(stopped,e.kind!=='auth');
+    await chrome.storage.local.set({[SYNC]:stopped});await schedule(stopped);return visibleSync(stopped,e.kind!=='auth',Boolean(await savedVault()));
   }
 }
 let alarmRegistered=false;
@@ -106,7 +121,7 @@ async function handle(m) {
   const rows = await records(ids);
   if (m.type === 'state') {
     const page = await current(lookup), seen = page ? await candidate(page.tabId) : null;
-    return {records: rows, current: page, candidate: seen?.slug === page?.slug ? seen : null,publisher:visibleSync(await syncState(ids),Boolean(await token()))};
+    return {records: rows, current: page, candidate: seen?.slug === page?.slug ? seen : null,publisher:visibleSync(await syncState(ids),Boolean(await token()),Boolean(await savedVault()))};
   }
   if (m.type === 'mark') {
     const page = await current(lookup);
@@ -136,15 +151,31 @@ async function handle(m) {
     if(!await chrome.permissions.contains(PUBLIC_PERMISSION))throw Error('Grant only the optional publisher permissions from the popup.');
     registerAlarm();
     if(typeof m.token!=='string'||!/^github_pat_[A-Za-z0-9_]+$/.test(m.token))throw Error('Use a fine-grained GitHub token restricted to Planton361/myatlas.');
+    // Only encrypted ciphertext persists. The plaintext PAT is session-only.
+    const sealed=await MyAtlasTokenVault.seal(m.token,m.passphrase,MyAtlasPublicProgress.ENDPOINT);
     const s=await syncState(ids),ops=new Map(s.ops.map(op=>[op.problemId,op]));
     rows.forEach(r=>ops.set(r.problemId,{problemId:r.problemId,source:r.source}));
     const enabled={...s,enabled:true,ops:[...ops.values()],phase:'pending',attempts:0,nextRetryAt:Date.now()+60000,error:null};
-    await chrome.storage.session.set({[TOKEN]:m.token,publisherDestination:MyAtlasPublicProgress.ENDPOINT});await chrome.storage.local.set({[SYNC]:enabled});await schedule(enabled);
-    enqueue(()=>syncNow()).catch(()=>{});return visibleSync(enabled,true);
+    await chrome.storage.local.set({[SYNC]:enabled,[VAULT]:sealed});
+    await chrome.storage.session.set({[TOKEN]:m.token,publisherDestination:MyAtlasPublicProgress.ENDPOINT});
+    await schedule(enabled);enqueue(()=>syncNow()).catch(()=>{});return visibleSync(enabled,true,true);
+  }
+  if(m.type==='publisher-unlock'){
+    const saved=await savedVault(),s=await syncState(ids);
+    if(!s.enabled || !saved)throw Error('No enabled saved token. Set up GitHub sync first.');
+    if(!await chrome.permissions.contains(PUBLIC_PERMISSION))throw Error('Publisher permission is missing. Grant permissions from the popup.');
+    const credential=await MyAtlasTokenVault.open(saved,m.passphrase,MyAtlasPublicProgress.ENDPOINT);
+    const resumed={...s,phase:'pending',attempts:0,nextRetryAt:null,error:null};
+    await chrome.storage.session.set({[TOKEN]:credential,publisherDestination:MyAtlasPublicProgress.ENDPOINT});
+    await chrome.storage.local.set({[SYNC]:resumed});await schedule(resumed);
+    enqueue(()=>syncNow()).catch(()=>{});
+    return visibleSync(resumed,true,true);
   }
   if(m.type==='publisher-disable'){
     const stopped={...await syncState(ids),enabled:false,phase:'disabled',nextRetryAt:null,error:null};
-    await chrome.storage.session.remove(TOKEN);await chrome.storage.local.set({[SYNC]:stopped});await schedule(stopped);return visibleSync(stopped);
+    await chrome.storage.local.remove(VAULT);
+    await chrome.storage.session.remove(TOKEN);
+    await chrome.storage.local.set({[SYNC]:stopped});await schedule(stopped);return visibleSync(stopped);
   }
   if(m.type==='sync-now')return syncNow();
   throw Error('Unknown action');
