@@ -1,17 +1,17 @@
 const {test} = require('node:test'), assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
-const C = require('../extension/core.js');
+const C = require('../extension/core.js'), webcrypto = require('node:crypto').webcrypto;
 function harness(initial = {}, options = {}) {
   let listener, data = structuredClone(initial), failWrite = false;
   const runtime = {id:'test',getURL:p=>'chrome-extension://test/'+p,onMessage:{addListener:f=>listener=f}};
   const tab = {id:1,url:'https://leetcode.com/problems/two-sum/'};
   let candidate=null, access,sessionAccess,alarmHandler,sessionData=structuredClone(options.session||{}),alarm,granted=options.permissions!==false,added;
-  const chrome = {runtime,storage:{local:{setAccessLevel:async x=>access=x,get:async()=>structuredClone(data),set:async x=>{if(failWrite)throw Error('Quota exceeded');await new Promise(r=>setTimeout(r,1));data={...data,...structuredClone(x)};}}},tabs:{query:async()=>[tab],sendMessage:async(id,m)=>m.type==='context'?C.problemURL(tab.url):m.type==='candidate'?candidate:(candidate=null)}};
+  const chrome = {runtime,storage:{local:{setAccessLevel:async x=>access=x,get:async()=>structuredClone(data),set:async x=>{if(failWrite)throw Error('Quota exceeded');await new Promise(r=>setTimeout(r,1));data={...data,...structuredClone(x)};},remove:async key=>{if(failWrite)throw Error('Quota exceeded');for(const k of Array.isArray(key)?key:[key])delete data[k];}}},tabs:{query:async()=>[tab],sendMessage:async(id,m)=>m.type==='context'?C.problemURL(tab.url):m.type==='candidate'?candidate:(candidate=null)}};
   chrome.storage.session={setAccessLevel:async x=>sessionAccess=x,get:async()=>structuredClone(sessionData),set:async x=>sessionData={...sessionData,...structuredClone(x)},remove:async key=>{for(const k of Array.isArray(key)?key:[key])delete sessionData[k];}};
   chrome.permissions={contains:async()=>granted,onAdded:{addListener:f=>added=f}};
   const alarmAPI={onAlarm:{addListener:f=>alarmHandler=f},create:async(name,value)=>alarm={name,...value},clear:async()=>alarm=null};
   if(!options.delayedAlarm)chrome.alarms=alarmAPI;
   let context;
-  context=vm.createContext({MyAtlasTracker:C,chrome,importScripts:(...files)=>files.filter(f=>f!=='core.js').forEach(f=>vm.runInContext(fs.readFileSync(path.join(__dirname,'../extension',f),'utf8'),context)),fetch:async(url,params)=>url.endsWith('catalog-index.json')?{ok:true,json:async()=>({'two-sum':'lc:problem:p0001','add-two-numbers':'lc:problem:eval-00002'})}:options.fetch(url,params),URL,Date,Set,Promise,Error,AbortController,setTimeout,clearTimeout,atob,btoa});
+  context=vm.createContext({MyAtlasTracker:C,chrome,importScripts:(...files)=>files.filter(f=>f!=='core.js').forEach(f=>vm.runInContext(fs.readFileSync(path.join(__dirname,'../extension',f),'utf8'),context)),fetch:async(url,params)=>url.endsWith('catalog-index.json')?{ok:true,json:async()=>({'two-sum':'lc:problem:p0001','add-two-numbers':'lc:problem:eval-00002'})}:options.fetch(url,params),URL,Date,Set,Promise,Error,AbortController,setTimeout,clearTimeout,atob,btoa,crypto:webcrypto,TextEncoder,TextDecoder});
   chrome.tabs.onActivated={addListener:()=>{}};
   vm.runInContext(fs.readFileSync(path.join(__dirname,'../extension/worker.js'),'utf8'),context);
   const popup={id:'test',url:runtime.getURL('popup.html')};
