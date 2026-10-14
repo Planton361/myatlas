@@ -28,28 +28,33 @@
         <span class="page-state" id="current-state">Waiting for a problem</span>
       </div>
       <h2 class="problem-title" id="current">Open a supported problem</h2>
-      <div class="problem-meta" id="current-meta" role="group" aria-label="Current problem details">Visit a problem page included in the tracker catalog.</div>
       <div class="accepted-card" id="accepted-card" hidden>
         <p class="accepted-label">Accepted detected</p>
         <p class="candidate-copy" id="candidate"></p>
         <button id="confirm" class="button button-primary" type="button" hidden>Confirm Accepted</button>
       </div>
-      <button id="mark" class="button button-primary" type="button" disabled>Mark current problem solved</button>
-      <p class="helper attestation-note">Only your confirmation saves a solve. Accepted results always need review.</p>
+      <div class="primary-actions">
+        <button id="mark" class="button button-primary" type="button" aria-label="Mark current problem solved" disabled>Mark solved</button>
+        <button id="sync-now" class="button button-secondary" type="button">Set up sync</button>
+      </div>
+      <p class="quick-sync-status" id="quick-sync-status" role="status" aria-live="polite">Sync is off</p>
+      <p class="helper attestation-note">Only your confirmation saves a solve.</p>
+      <details class="current-meta-disclosure">
+        <summary>Problem details</summary>
+        <div class="problem-meta" id="current-meta" role="group" aria-label="Current problem details">Visit a problem page included in the tracker catalog.</div>
+      </details>
     </section>
 
-    <section class="recent-section" aria-labelledby="recent-heading">
-      <div class="section-heading">
-        <div>
-          <h2 id="recent-heading">Recently recorded</h2>
-          <p>Latest saves on this device</p>
-        </div>
-        <span class="recent-count" id="recent-count" aria-label="0 recent problems">0</span>
-      </div>
-      <ol id="recent" class="recent-list" aria-label="Recently recorded problems">
+    <details id="recent-details" class="disclosure recent-disclosure">
+      <summary id="recent-heading">
+        <span class="summary-copy"><strong>Solved problems</strong><small>View your saved solutions</small></span>
+        <span class="recent-count" id="recent-count" aria-label="0 solved problems">0</span>
+        <span class="chevron" aria-hidden="true"></span>
+      </summary>
+      <ol id="recent" class="recent-list" aria-label="Saved solved problems">
         <li class="empty-state">No solves recorded yet.</li>
       </ol>
-    </section>
+    </details>
 
     <section class="secondary-tools" aria-label="More tracker options">
       <details class="disclosure">
@@ -98,11 +103,10 @@
           </div>
           <p class="helper">Only confirmed problem IDs are published to the public MyAtlas progress file.</p>
           <div class="publisher-actions">
-            <button id="sync-now" class="button button-secondary" type="button" disabled>Sync now</button>
             <button id="publisher-disable" class="button button-quiet" type="button">Disable and forget saved token</button>
           </div>
 
-          <details class="vault-disclosure">
+          <details class="vault-disclosure" id="vault-details">
             <summary>
               <span class="summary-copy"><strong>Token and passphrase</strong><small>Set up, replace, or unlock</small></span>
               <span class="chevron" aria-hidden="true"></span>
