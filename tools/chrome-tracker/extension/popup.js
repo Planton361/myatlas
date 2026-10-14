@@ -67,10 +67,20 @@ function renderPublisher(p) {
   $('publisher-status-detail').textContent = publisherDetail(p);
   $('publisher-status').dataset.state = p.phase || 'disabled';
   $('publisher-summary').textContent = title + (p.pending ? ' · ' + p.pending + ' waiting' : '');
-  $('sync-now').disabled = !p.enabled || !p.unlocked;
+  // The top Sync button stays available even before setup. In that case it
+  // opens the existing vault controls rather than attempting a GitHub write.
+  const canSync = p.enabled && p.unlocked;
+  const label = p.phase === 'publishing' ? 'Syncing…'
+    : canSync ? 'Sync now'
+    : p.phase === 'unlock-required' ? 'Unlock sync'
+    : p.phase === 'token-rejected' ? 'Replace token' : 'Set up sync';
+  $('sync-now').textContent = label;
+  $('sync-now').disabled = p.phase === 'publishing';
+  $('sync-now').setAttribute('aria-label', canSync ? 'Sync confirmed solves to GitHub' : label + ' in Public sync settings');
+  $('quick-sync-status').textContent = title + (p.pending ? ' · ' + p.pending + ' waiting' : '');
+  $('quick-sync-status').dataset.state = p.phase || 'disabled';
   $('publisher-unlock-controls').hidden = !p.vaultSaved || !p.enabled || p.unlocked;
   $('publisher-enable').textContent = p.vaultSaved ? 'Replace saved token and passphrase' : 'Save encrypted token and enable sync';
-  if (p.enabled && ['unlock-required', 'token-required', 'token-rejected', 'permission-required', 'blocked'].includes(p.phase)) $('sync-details').open = true;
 }
 async function refresh() {
   await catalogReady;
@@ -78,8 +88,8 @@ async function refresh() {
   renderPublisher(state.publisher);
   $('count').textContent = String(state.records.length);
   $('solved-badge').setAttribute('aria-label', state.records.length + ' solved problems');
-  $('recent-count').textContent = String(Math.min(state.records.length, 5));
-  $('recent-count').setAttribute('aria-label', Math.min(state.records.length, 5) + ' recent problems');
+  $('recent-count').textContent = String(state.records.length);
+  $('recent-count').setAttribute('aria-label', state.records.length + ' solved problems');
   $('current-state').textContent = state.current ? 'Ready' : 'No page';
   if (state.current) {
     $('current').textContent = problemName(state.current.slug);
@@ -113,7 +123,7 @@ async function refresh() {
   }
   $('correction').disabled = !sorted.length;
   $('remove').disabled = !sorted.length;
-  for (const record of sorted.slice(0, 5)) {
+  for (const record of sorted) {
     const li = document.createElement('li');
     const copy = document.createElement('div');
     const title = document.createElement('span');
@@ -194,7 +204,25 @@ $('publisher-unlock').onclick = () => run(async () => {
   $('publisher-unlock-passphrase').value = '';
   await send({type: 'publisher-unlock', passphrase}); await refresh(); notice('Sync resumed for this Chrome session.');
 });
-$('sync-now').onclick = () => run(async () => { await send({type: 'sync-now'}); await refresh(); notice('Sync checked. See the status above.'); });
+function openSyncSettings(p) {
+  $('sync-details').open = true;
+  $('vault-details').open = true;
+  const field = p.enabled && p.vaultSaved && p.phase === 'unlock-required'
+    ? $('publisher-unlock-passphrase') : $('publisher-token');
+  field.focus();
+  field.scrollIntoView({block: 'nearest'});
+}
+$('sync-now').onclick = () => run(async () => {
+  const p = state?.publisher;
+  if (!p) return;
+  if (!p.enabled || !p.unlocked) {
+    openSyncSettings(p);
+    return;
+  }
+  await send({type: 'sync-now'});
+  await refresh();
+  notice('Sync checked. See the status above.');
+});
 $('publisher-disable').onclick = () => run(async () => {
   await send({type: 'publisher-disable'});
   for (const id of ['publisher-token', 'publisher-vault-passphrase', 'publisher-unlock-passphrase']) $(id).value = '';
