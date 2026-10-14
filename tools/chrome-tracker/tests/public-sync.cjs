@@ -1,7 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const P=require('../extension/public-schema.js'),G=require('../extension/github-publisher.js'),R=require('../public-reader.js'),M=require('../mock-github.js');
 const {harness}=require('./worker.cjs');
-const ids=new Set(['lc:problem:p0001','lc:problem:eval-00002']),token='github_pat_DISPOSABLE_NO_PRIVILEGES',now=Date.now();
+const ids=new Set(['lc:problem:p0001','lc:problem:eval-00002']),token='github_pat_DISPOSABLE_NO_PRIVILEGES',passphrase='a disposable vault phrase just for tests',now=Date.now();
 const op={problemId:'lc:problem:p0001',source:'manual-owner-attestation'},empty=()=>({schemaVersion:1,updatedAt:new Date(now).toISOString(),solved:[]});
 function setup(){const api=M.create({ids,now:()=>now}),publisher=G.create({ids,fetch:api.fetch,now:()=>now,pause:async()=>{}});return {api,publisher};}
 test('strict public data has only version, timestamp, exact IDs and attestation sources',()=>{
@@ -56,30 +56,30 @@ async function phase(h,wanted,check=()=>true){for(let i=0;i<80;i++){const result
 test('worker opt-in keeps credentials in trusted session storage and publishes confirmed local IDs',async()=>{
   const api=M.create({ids}),record={...op,solved:true,observedAt:new Date().toISOString()},h=harness({progress:[record]},{fetch:api.fetch});
   assert.equal((await h.send({type:'state'})).value.publisher.enabled,false);assert.equal(api.calls.length,0);
-  assert.equal((await h.send({type:'publisher-enable',token})).ok,true);const state=await phase(h,'published');
+  assert.equal((await h.send({type:'publisher-enable',token,passphrase})).ok,true);const state=await phase(h,'published');
   assert.equal(state.publisher.pending,0);assert.equal(api.value.solved.length,1);
   assert.equal(h.session.publisherToken,token);assert.equal(h.sessionAccess.accessLevel,'TRUSTED_CONTEXTS');assert(!JSON.stringify(h.data).includes(token));assert(!JSON.stringify(state).includes(token));
   assert.equal(await h.send({type:'state'},{id:'test',url:'https://leetcode.com/problems/two-sum/',tab:{id:1}}),undefined);
-  await h.send({type:'publisher-disable'});assert.equal(h.session.publisherToken,undefined);
+  await h.send({type:'publisher-disable'});assert.equal(h.session.publisherToken,undefined);assert.equal(h.data.publisherTokenVaultV1,undefined);
 });
 test('worker retry outbox survives restart, remembers undo while disabled, and never resurrects deleted solves',async()=>{
   const api=M.create({ids}),record={...op,solved:true,observedAt:new Date().toISOString()},h=harness({progress:[record]},{fetch:api.fetch});
-  api.setScenario('offline');await h.send({type:'publisher-enable',token});const pending=await phase(h,'pending',p=>p.attempts>0);
+  api.setScenario('offline');await h.send({type:'publisher-enable',token,passphrase});const pending=await phase(h,'pending',p=>p.attempts>0);
   assert.equal(pending.publisher.pending,1);assert(h.alarm.when>Date.now());
   h.fireAlarm();await phase(h,'published');assert.equal(api.puts,1);
-  const restarted=harness(h.data,{fetch:api.fetch});assert.equal((await restarted.send({type:'state'})).value.publisher.phase,'token-required');
-  await restarted.send({type:'publisher-enable',token});await phase(restarted,'published');
+  const restarted=harness(h.data,{fetch:api.fetch});assert.equal((await restarted.send({type:'state'})).value.publisher.phase,'unlock-required');
+  await restarted.send({type:'publisher-unlock',passphrase});await phase(restarted,'published');
   await restarted.send({type:'publisher-disable'});await restarted.send({type:'remove',problemId:op.problemId});
   assert.equal(restarted.data.publisher.ops[0].source,null);
-  await restarted.send({type:'publisher-enable',token});await phase(restarted,'published');assert.equal(api.value.solved.length,0);
+  await restarted.send({type:'publisher-enable',token,passphrase});await phase(restarted,'published');assert.equal(api.value.solved.length,0);
 });
 test('worker rejects token without dropping pending IDs and makes permission denial a local-only state',async()=>{
   const api=M.create({ids}),record={...op,solved:true,observedAt:new Date().toISOString()},h=harness({progress:[record]},{fetch:api.fetch});
-  api.setScenario('rejected');await h.send({type:'publisher-enable',token});const rejected=await phase(h,'token-rejected');assert.equal(rejected.publisher.pending,1);assert.equal(h.session.publisherToken,undefined);
-  const denied=harness({progress:[record]},{fetch:api.fetch,permissions:false});assert.equal((await denied.send({type:'publisher-enable',token})).ok,false);assert.equal(denied.data.publisher,undefined);
+  api.setScenario('rejected');await h.send({type:'publisher-enable',token,passphrase});const rejected=await phase(h,'token-rejected');assert.equal(rejected.publisher.pending,1);assert.equal(h.session.publisherToken,undefined);
+  const denied=harness({progress:[record]},{fetch:api.fetch,permissions:false});assert.equal((await denied.send({type:'publisher-enable',token,passphrase})).ok,false);assert.equal(denied.data.publisher,undefined);
 });
 test('an optional alarms API appearing after permission grant registers retries correctly',async()=>{
   const api=M.create({ids}),record={...op,solved:true,observedAt:new Date().toISOString()},h=harness({progress:[record]},{fetch:api.fetch,permissions:false,delayedAlarm:true});
-  await h.send({type:'state'});h.grantPermissions();api.setScenario('offline');await h.send({type:'publisher-enable',token});await phase(h,'pending',p=>p.attempts>0);
+  await h.send({type:'state'});h.grantPermissions();api.setScenario('offline');await h.send({type:'publisher-enable',token,passphrase});await phase(h,'pending',p=>p.attempts>0);
   assert(h.alarm);h.fireAlarm();await phase(h,'published');assert.equal(api.puts,1);
 });
